@@ -2,7 +2,7 @@
 
 ## RealtyAPI (Redfin)
 - Base: `https://redfin.realtyapi.io`
-- Key: `rt_KK5cq8SGBr3PlZXPFQP1a3SQ`
+- Auth: `RT_KEY` env var (set in `~/.hermes/.env`)
 - Header: `x-realtyapi-key`
 
 ## Working Endpoints
