@@ -1,0 +1,498 @@
+# Reach source registry
+# ---------------------
+# Each entry declares one source. Fields:
+#   name         — slug used as <source> argument to reach.py query
+#   category     — grouping for the index (knowledge | government | science | weather | geo | finance | health | media)
+#   reference    — path under references/sources/ — required
+#   auth         — null | env_var name | "none"
+#   account      — null | "required" | "optional" — whether registration is needed
+#   account_url  — registration page (when account != null)
+#   monthly      — null | integer — hard monthly call cap (when known)
+#   daily        — null | integer — hard daily call cap (when known)
+#   rate         — informational rate hint (req/sec or req/min) — string or null
+#   base_url     — for endpoint-based generic dispatch
+#   custom       — null | module name under scripts/sources/ — when present, generic dispatch is skipped and the module's `query(action, params, auth)` is invoked
+#   actions      — map of action → {method, path, params_in (query|body), notes}
+# Generic dispatch: GET base_url + path with params_in inserted. JSON response returned as-is.
+# Custom modules override entirely; they receive (action, params, auth_dict) and return a JSON-serializable dict.
+
+sources:
+
+  # ============================================================
+  # KNOWLEDGE BASES (no key, no login)
+  # ============================================================
+  wikipedia:
+    category: knowledge
+    reference: wikipedia.md
+    auth: none
+    account: null
+    base_url: https://en.wikipedia.org/w/api.php
+    rate: "200/sec recommended ceiling; respect User-Agent rules"
+    actions:
+      search:   { method: GET, path: "", params_in: query, defaults: { action: query, list: search, format: json } }
+      summary:  { method: GET, path: "/page/summary/{title}", params_in: path, base_override: "https://en.wikipedia.org/api/rest_v1" }
+      extract:  { method: GET, path: "", params_in: query, defaults: { action: query, prop: extracts, format: json, exintro: true } }
+
+  wikidata:
+    category: knowledge
+    reference: wikidata.md
+    auth: none
+    custom: wikidata_sparql
+    rate: "5/sec; 60s query timeout"
+    base_url: https://query.wikidata.org/sparql
+    actions:
+      sparql: { description: "Run a SPARQL query. params: { query: '<sparql>' }" }
+      entity: { description: "Fetch entity JSON. params: { qid: 'Q42' }" }
+
+  openalex:
+    category: science
+    reference: openalex.md
+    auth: none
+    account: optional   # email in polite pool gets faster lane
+    base_url: https://api.openalex.org
+    rate: "10/sec polite pool, 100k/day"
+    actions:
+      works:    { method: GET, path: "/works",    params_in: query }
+      authors:  { method: GET, path: "/authors",  params_in: query }
+      sources:  { method: GET, path: "/sources",  params_in: query }
+      concepts: { method: GET, path: "/concepts", params_in: query }
+
+  crossref:
+    category: science
+    reference: crossref.md
+    auth: none
+    base_url: https://api.crossref.org
+    rate: "50/sec polite pool"
+    actions:
+      works:   { method: GET, path: "/works",          params_in: query }
+      doi:     { method: GET, path: "/works/{doi}",    params_in: path }
+      members: { method: GET, path: "/members",        params_in: query }
+
+  pubmed:
+    category: health
+    reference: pubmed.md
+    auth: none
+    custom: pubmed
+    base_url: https://eutils.ncbi.nlm.nih.gov/entrez/eutils
+    rate: "3/sec without key, 10/sec with key"
+    actions:
+      search: { description: "esearch + efetch. params: { term: '...', limit: 20 }" }
+      fetch:  { description: "efetch by PMID list. params: { pmids: ['12345', ...] }" }
+      summary: { description: "esummary by PMID. params: { pmids: [...] }" }
+
+  arxiv:
+    category: science
+    reference: arxiv.md
+    auth: none
+    base_url: http://export.arxiv.org/api
+    rate: "1 req every 3 sec recommended"
+    actions:
+      search: { method: GET, path: "/query", params_in: query }
+
+  open_library:
+    category: knowledge
+    reference: open_library.md
+    auth: none
+    base_url: https://openlibrary.org
+    rate: "100/min"
+    actions:
+      search:    { method: GET, path: "/search.json",         params_in: query }
+      isbn:      { method: GET, path: "/isbn/{isbn}.json",    params_in: path }
+      author:    { method: GET, path: "/authors/{key}.json",  params_in: path }
+      work:      { method: GET, path: "/works/{key}.json",    params_in: path }
+
+  # ============================================================
+  # GOVERNMENT — US (no key)
+  # ============================================================
+  sec_edgar:
+    category: government
+    reference: sec_edgar.md
+    auth: none
+    custom: sec_edgar
+    base_url: https://data.sec.gov
+    rate: "10/sec; require User-Agent identifying caller"
+    actions:
+      submissions:   { description: "Recent filings for CIK. params: { cik: '0000320193' }" }
+      facts:         { description: "Company facts (XBRL). params: { cik }" }
+      filing:        { description: "Fetch a specific filing. params: { cik, accession }" }
+      ticker_lookup: { description: "Resolve ticker → CIK. params: { ticker: 'AAPL' }" }
+
+  federal_register:
+    category: government
+    reference: federal_register.md
+    auth: none
+    base_url: https://www.federalregister.gov/api/v1
+    rate: "1000/hour"
+    actions:
+      documents: { method: GET, path: "/documents.json",         params_in: query }
+      document:  { method: GET, path: "/documents/{doc_id}.json", params_in: path }
+      agencies:  { method: GET, path: "/agencies.json",          params_in: query }
+
+  usaspending:
+    category: government
+    reference: usaspending.md
+    auth: none
+    base_url: https://api.usaspending.gov/api/v2
+    rate: "no published cap"
+    actions:
+      awards_search: { method: POST, path: "/search/spending_by_award/", params_in: body }
+      award:         { method: GET,  path: "/awards/{award_id}/",          params_in: path }
+      agencies:      { method: GET,  path: "/references/toptier_agencies/", params_in: query }
+
+  gdelt:
+    category: media
+    reference: gdelt.md
+    auth: none
+    base_url: https://api.gdeltproject.org/api/v2
+    rate: "no published cap; throttle to <1/sec"
+    actions:
+      doc_search: { method: GET, path: "/doc/doc",   params_in: query }
+      tv_search:  { method: GET, path: "/tv/tv",     params_in: query }
+      geo:        { method: GET, path: "/geo/geo",   params_in: query }
+
+  # ============================================================
+  # GEO + WEATHER (no key)
+  # ============================================================
+  open_meteo:
+    category: weather
+    reference: open_meteo.md
+    auth: none
+    base_url: https://api.open-meteo.com/v1
+    rate: "10000/day, 600/hour, 60/min"
+    actions:
+      forecast:    { method: GET, path: "/forecast",    params_in: query }
+      archive:     { method: GET, path: "/archive",     params_in: query, base_override: "https://archive-api.open-meteo.com/v1" }
+      marine:      { method: GET, path: "/marine",      params_in: query, base_override: "https://marine-api.open-meteo.com/v1" }
+      air_quality: { method: GET, path: "/air-quality", params_in: query, base_override: "https://air-quality-api.open-meteo.com/v1" }
+      flood:       { method: GET, path: "/flood",       params_in: query, base_override: "https://flood-api.open-meteo.com/v1" }
+      pollen:      { method: GET, path: "/air-quality", params_in: query, base_override: "https://air-quality-api.open-meteo.com/v1", defaults: { hourly: "alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen" } }
+
+  noaa_nws:
+    category: weather
+    reference: noaa_nws.md
+    auth: none   # but require User-Agent identifying caller
+    base_url: https://api.weather.gov
+    rate: "no documented hard cap"
+    actions:
+      points:        { method: GET, path: "/points/{lat},{lon}", params_in: path }
+      forecast:      { method: GET, path: "/gridpoints/{office}/{x},{y}/forecast", params_in: path }
+      alerts:        { method: GET, path: "/alerts/active", params_in: query }
+      observations:  { method: GET, path: "/stations/{station_id}/observations/latest", params_in: path }
+
+  usgs_earthquake:
+    category: weather
+    reference: usgs_earthquake.md
+    auth: none
+    base_url: https://earthquake.usgs.gov/fdsnws/event/1
+    rate: "no documented cap"
+    actions:
+      query:    { method: GET, path: "/query",    params_in: query, defaults: { format: geojson } }
+      count:    { method: GET, path: "/count",    params_in: query }
+      version:  { method: GET, path: "/version",  params_in: query }
+
+  nominatim:
+    category: geo
+    reference: nominatim.md
+    auth: none   # require User-Agent
+    base_url: https://nominatim.openstreetmap.org
+    rate: "1/sec absolute"
+    actions:
+      search:    { method: GET, path: "/search",   params_in: query, defaults: { format: jsonv2 } }
+      reverse:   { method: GET, path: "/reverse",  params_in: query, defaults: { format: jsonv2 } }
+      lookup:    { method: GET, path: "/lookup",   params_in: query, defaults: { format: jsonv2 } }
+
+  photon:
+    category: geo
+    reference: photon.md
+    auth: none
+    base_url: https://photon.komoot.io
+    rate: "no published cap; faster alt to Nominatim"
+    actions:
+      search:  { method: GET, path: "/api",         params_in: query }
+      reverse: { method: GET, path: "/reverse",     params_in: query }
+
+  overpass:
+    category: geo
+    reference: overpass.md
+    auth: none
+    base_url: https://overpass-api.de/api
+    rate: "10000 query elements / 5 min; throttle on busy"
+    actions:
+      query: { method: POST, path: "/interpreter", params_in: body, content_type: "text/plain" }
+
+  rest_countries:
+    category: geo
+    reference: rest_countries.md
+    auth: none
+    base_url: https://restcountries.com/v3.1
+    rate: "no documented cap"
+    actions:
+      all:        { method: GET, path: "/all",                    params_in: query }
+      name:       { method: GET, path: "/name/{name}",            params_in: path }
+      code:       { method: GET, path: "/alpha/{code}",           params_in: path }
+      currency:   { method: GET, path: "/currency/{currency}",    params_in: path }
+
+  open_food_facts:
+    category: knowledge
+    reference: open_food_facts.md
+    auth: none
+    base_url: https://world.openfoodfacts.org
+    rate: "100/min recommended"
+    actions:
+      barcode:  { method: GET, path: "/api/v2/product/{barcode}.json", params_in: path }
+      search:   { method: GET, path: "/cgi/search.pl",                  params_in: query, defaults: { json: 1 } }
+
+  openaq:
+    category: weather
+    reference: openaq.md
+    auth: optional   # v3 requires API key for higher rate limits
+    env_var: OPENAQ_KEY
+    account: optional
+    account_url: https://docs.openaq.org/about/about
+    base_url: https://api.openaq.org/v3
+    rate: "60/min anonymous, 2000/min with key"
+    actions:
+      locations:    { method: GET, path: "/locations",    params_in: query }
+      measurements: { method: GET, path: "/measurements", params_in: query }
+      parameters:   { method: GET, path: "/parameters",   params_in: query }
+
+  worldtime:
+    category: geo
+    reference: worldtime.md
+    auth: none
+    base_url: http://worldtimeapi.org/api
+    rate: "no documented cap"
+    actions:
+      timezone: { method: GET, path: "/timezone/{area}/{location}", params_in: path }
+      ip:       { method: GET, path: "/ip", params_in: query }
+
+  nager_holidays:
+    category: knowledge
+    reference: nager_holidays.md
+    auth: none
+    base_url: https://date.nager.at/api/v3
+    rate: "no documented cap"
+    actions:
+      public:           { method: GET, path: "/PublicHolidays/{year}/{country}",      params_in: path }
+      next_public:      { method: GET, path: "/NextPublicHolidays/{country}",         params_in: path }
+      countries:        { method: GET, path: "/AvailableCountries",                   params_in: query }
+      long_weekend:     { method: GET, path: "/LongWeekend/{year}/{country}",          params_in: path }
+
+  ip_api:
+    category: geo
+    reference: ip_api.md
+    auth: none
+    base_url: http://ip-api.com
+    rate: "45 req/min from one IP (free, non-commercial only)"
+    actions:
+      lookup: { method: GET, path: "/json/{ip}", params_in: path }
+
+  themealdb:
+    category: knowledge
+    reference: themealdb.md
+    auth: none
+    base_url: https://www.themealdb.com/api/json/v1/1
+    rate: "test endpoint only on free; no documented cap"
+    actions:
+      search:     { method: GET, path: "/search.php",        params_in: query }
+      lookup:     { method: GET, path: "/lookup.php",        params_in: query }
+      random:     { method: GET, path: "/random.php",        params_in: query }
+      categories: { method: GET, path: "/categories.php",    params_in: query }
+
+  thecocktaildb:
+    category: knowledge
+    reference: thecocktaildb.md
+    auth: none
+    base_url: https://www.thecocktaildb.com/api/json/v1/1
+    rate: "test endpoint only on free"
+    actions:
+      search: { method: GET, path: "/search.php", params_in: query }
+      lookup: { method: GET, path: "/lookup.php", params_in: query }
+      random: { method: GET, path: "/random.php", params_in: query }
+
+  world_bank:
+    category: government
+    reference: world_bank.md
+    auth: none
+    base_url: https://api.worldbank.org/v2
+    rate: "no documented cap"
+    actions:
+      indicator:   { method: GET, path: "/country/{country}/indicator/{indicator}", params_in: path, defaults: { format: json } }
+      indicators:  { method: GET, path: "/indicator", params_in: query, defaults: { format: json } }
+      countries:   { method: GET, path: "/country", params_in: query, defaults: { format: json } }
+
+  # ============================================================
+  # NEEDS KEY OR LOGIN (free tier)
+  # ============================================================
+  fred:
+    category: finance
+    reference: fred.md
+    auth: required
+    env_var: FRED_KEY
+    account: required
+    account_url: https://fred.stlouisfed.org/docs/api/api_key.html
+    base_url: https://api.stlouisfed.org/fred
+    rate: "120/min"
+    actions:
+      series_observations: { method: GET, path: "/series/observations", params_in: query, auth_param: api_key, defaults: { file_type: json } }
+      series:              { method: GET, path: "/series",              params_in: query, auth_param: api_key, defaults: { file_type: json } }
+      series_search:       { method: GET, path: "/series/search",       params_in: query, auth_param: api_key, defaults: { file_type: json } }
+      category:            { method: GET, path: "/category",            params_in: query, auth_param: api_key, defaults: { file_type: json } }
+
+  nasa:
+    category: science
+    reference: nasa.md
+    auth: required
+    env_var: NASA_KEY
+    account: required
+    account_url: https://api.nasa.gov/
+    monthly: null
+    daily: 1000   # default; DEMO_KEY caps at 30/hour, registered keys at 1000/hour
+    base_url: https://api.nasa.gov
+    rate: "1000/hour with registered key"
+    actions:
+      apod:        { method: GET, path: "/planetary/apod",       params_in: query, auth_param: api_key }
+      neo_feed:    { method: GET, path: "/neo/rest/v1/feed",     params_in: query, auth_param: api_key }
+      neo_lookup:  { method: GET, path: "/neo/rest/v1/neo/{id}", params_in: path,  auth_param: api_key }
+      epic:        { method: GET, path: "/EPIC/api/natural",     params_in: query, auth_param: api_key }
+      eonet:       { method: GET, path: "/EONET/api/v3/events",  params_in: query, auth_param: null, base_override: "https://eonet.gsfc.nasa.gov" }
+      mars_rover:  { method: GET, path: "/mars-photos/api/v1/rovers/{rover}/photos", params_in: path, auth_param: api_key }
+
+  congress_gov:
+    category: government
+    reference: congress_gov.md
+    auth: required
+    env_var: CONGRESS_KEY
+    account: required
+    account_url: https://api.congress.gov/sign-up/
+    base_url: https://api.congress.gov/v3
+    rate: "5000/hour"
+    actions:
+      bill:         { method: GET, path: "/bill/{congress}/{type}/{number}", params_in: path, auth_param: api_key, defaults: { format: json } }
+      bills:        { method: GET, path: "/bill", params_in: query, auth_param: api_key, defaults: { format: json } }
+      member:       { method: GET, path: "/member/{bioguide_id}", params_in: path, auth_param: api_key, defaults: { format: json } }
+      vote:         { method: GET, path: "/house-vote/{congress}/{session}/{vote}", params_in: path, auth_param: api_key, defaults: { format: json } }
+      committee:    { method: GET, path: "/committee", params_in: query, auth_param: api_key, defaults: { format: json } }
+
+  bls:
+    category: government
+    reference: bls.md
+    auth: required
+    env_var: BLS_KEY
+    account: required
+    account_url: https://data.bls.gov/registrationEngine/
+    base_url: https://api.bls.gov/publicAPI/v2
+    rate: "500/day with key (25/day without)"
+    daily: 500
+    actions:
+      timeseries:  { method: POST, path: "/timeseries/data/", params_in: body, auth_field: registrationkey }
+      surveys:     { method: GET,  path: "/surveys",          params_in: query }
+
+  govinfo:
+    category: government
+    reference: govinfo.md
+    auth: required
+    env_var: GOVINFO_KEY
+    account: required
+    account_url: https://api.govinfo.gov/docs/
+    base_url: https://api.govinfo.gov
+    rate: "1000/hour"
+    actions:
+      packages:   { method: GET, path: "/packages",          params_in: query, auth_param: api_key }
+      package:    { method: GET, path: "/packages/{id}",     params_in: path,  auth_param: api_key }
+      published:  { method: GET, path: "/published/{date}",  params_in: path,  auth_param: api_key }
+      collections: { method: GET, path: "/collections",       params_in: query, auth_param: api_key }
+
+  alpha_vantage:
+    category: finance
+    reference: alpha_vantage.md
+    auth: required
+    env_var: ALPHA_VANTAGE_KEY
+    account: required
+    account_url: https://www.alphavantage.co/support/#api-key
+    base_url: https://www.alphavantage.co/query
+    rate: "5/min"
+    daily: 25       # free tier hard cap
+    monthly: 750    # implied (25/day × 30 days)
+    actions:
+      time_series_daily:  { method: GET, path: "", params_in: query, auth_param: apikey, defaults: { function: TIME_SERIES_DAILY } }
+      global_quote:       { method: GET, path: "", params_in: query, auth_param: apikey, defaults: { function: GLOBAL_QUOTE } }
+      fx_daily:           { method: GET, path: "", params_in: query, auth_param: apikey, defaults: { function: FX_DAILY } }
+      overview:           { method: GET, path: "", params_in: query, auth_param: apikey, defaults: { function: OVERVIEW } }
+
+  semantic_scholar:
+    category: science
+    reference: semantic_scholar.md
+    auth: optional
+    env_var: SEMANTIC_SCHOLAR_KEY
+    account: optional
+    account_url: https://www.semanticscholar.org/product/api
+    base_url: https://api.semanticscholar.org/graph/v1
+    rate: "100/5min anonymous, 1/sec for partners"
+    actions:
+      paper_search:   { method: GET, path: "/paper/search",       params_in: query, auth_header: "x-api-key" }
+      paper:          { method: GET, path: "/paper/{paper_id}",   params_in: path,  auth_header: "x-api-key" }
+      author:         { method: GET, path: "/author/{author_id}", params_in: path,  auth_header: "x-api-key" }
+      recommendations: { method: GET, path: "/recommendations/v1/papers/forpaper/{paper_id}", params_in: path, auth_header: "x-api-key" }
+
+  usda_fooddata:
+    category: health
+    reference: usda_fooddata.md
+    auth: required
+    env_var: USDA_KEY
+    account: required
+    account_url: https://api.nal.usda.gov/fdc/
+    base_url: https://api.nal.usda.gov/fdc/v1
+    rate: "1000/hour"
+    actions:
+      search:  { method: GET, path: "/foods/search",  params_in: query, auth_param: api_key }
+      food:    { method: GET, path: "/food/{fdc_id}", params_in: path,  auth_param: api_key }
+      foods:   { method: POST, path: "/foods",        params_in: body,  auth_param: api_key }
+
+  courtlistener:
+    category: government
+    reference: courtlistener.md
+    auth: required
+    env_var: COURTLISTENER_KEY
+    account: required
+    account_url: https://www.courtlistener.com/help/api/rest/
+    base_url: https://www.courtlistener.com/api/rest/v4
+    rate: "5000/hour"
+    actions:
+      search:    { method: GET, path: "/search/", params_in: query, auth_header: "Authorization", auth_prefix: "Token " }
+      opinion:   { method: GET, path: "/opinions/{id}/", params_in: path, auth_header: "Authorization", auth_prefix: "Token " }
+      docket:    { method: GET, path: "/dockets/{id}/", params_in: path, auth_header: "Authorization", auth_prefix: "Token " }
+      court:     { method: GET, path: "/courts/{id}/", params_in: path, auth_header: "Authorization", auth_prefix: "Token " }
+
+  fec:
+    category: government
+    reference: fec.md
+    auth: required
+    env_var: FEC_KEY
+    account: required
+    account_url: https://api.open.fec.gov/developers/
+    base_url: https://api.open.fec.gov/v1
+    rate: "1000/hour"
+    actions:
+      candidates:   { method: GET, path: "/candidates", params_in: query, auth_param: api_key }
+      candidate:    { method: GET, path: "/candidate/{candidate_id}", params_in: path, auth_param: api_key }
+      committees:   { method: GET, path: "/committees", params_in: query, auth_param: api_key }
+      committee:    { method: GET, path: "/committee/{committee_id}", params_in: path, auth_param: api_key }
+      filings:      { method: GET, path: "/filings", params_in: query, auth_param: api_key }
+
+  geonames:
+    category: geo
+    reference: geonames.md
+    auth: required
+    env_var: GEONAMES_USERNAME
+    account: required
+    account_url: https://www.geonames.org/login
+    base_url: http://api.geonames.org
+    rate: "20000/day, 1000/hour per username (free)"
+    daily: 20000
+    actions:
+      search:        { method: GET, path: "/searchJSON",          params_in: query, auth_param: username }
+      country_info:  { method: GET, path: "/countryInfoJSON",     params_in: query, auth_param: username }
+      timezone:      { method: GET, path: "/timezoneJSON",        params_in: query, auth_param: username }
+      elevation:     { method: GET, path: "/srtm3JSON",           params_in: query, auth_param: username }
+      nearby:        { method: GET, path: "/findNearbyPlaceNameJSON", params_in: query, auth_param: username }
