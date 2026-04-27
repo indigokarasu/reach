@@ -1,0 +1,113 @@
+# Reach source index
+
+This is the authoritative list of every data source registered in `scripts/sources.yml`. Each row links to a per-source reference file under `references/sources/<name>.md`.
+
+## How to read this index
+
+| Column | Meaning |
+|---|---|
+| **Source** | Slug to use as `<source>` argument: `python3 scripts/reach.py query <source> <action> [params_json]` |
+| **Category** | knowledge / government / science / weather / geo / finance / health / media |
+| **Auth** | `none` = public, `optional` = key recommended for higher rate, `required` = won't work without |
+| **Account** | `null` = no account ever needed, `optional` = key improves limits, `required` = must register |
+| **Daily / Monthly** | Hard caps on free tier when known. Empty = no documented hard cap (rate-limit instead). |
+
+When the **Account** column says `required`, Reach is authorized to register at the source's signup URL using `mx.indigo.karasu@gmail.com` and store the issued key in `~/.hermes/.env` under the registered env var. See [`account_provisioning.md`](../account_provisioning.md) for the full registration playbook.
+
+---
+
+## No key, no login
+
+| Source | Category | Reference | Auth | Notes |
+|---|---|---|---|---|
+| `wikipedia` | knowledge | [wikipedia.md](wikipedia.md) | none | full text + summary; needs `User-Agent` |
+| `wikidata` | knowledge | [wikidata.md](wikidata.md) | none | SPARQL + entity JSON; 5/sec, 60s timeout |
+| `sec_edgar` | government | [sec_edgar.md](sec_edgar.md) | none | every US public-company filing; require `User-Agent` |
+| `gdelt` | media | [gdelt.md](gdelt.md) | none | global news events + sentiment, deep history |
+| `openalex` | science | [openalex.md](openalex.md) | none / polite-pool email | 240M+ scholarly works |
+| `open_meteo` | weather | [open_meteo.md](open_meteo.md) | none | forecast + 80yr archive + marine + air + pollen + flood |
+| `world_bank` | government | [world_bank.md](world_bank.md) | none | country-level macro indicators |
+| `crossref` | science | [crossref.md](crossref.md) | none | DOI metadata, 50/sec polite |
+| `pubmed` | health | [pubmed.md](pubmed.md) | none / optional NCBI key | biomedical literature |
+| `arxiv` | science | [arxiv.md](arxiv.md) | none | preprint metadata, 1 req / 3 sec |
+| `federal_register` | government | [federal_register.md](federal_register.md) | none | daily US rules / notices / proposed regs |
+| `usaspending` | government | [usaspending.md](usaspending.md) | none | federal spending + awards |
+| `overpass` | geo | [overpass.md](overpass.md) | none | OpenStreetMap via Overpass QL |
+| `noaa_nws` | weather | [noaa_nws.md](noaa_nws.md) | none | official US forecasts + alerts |
+| `usgs_earthquake` | weather | [usgs_earthquake.md](usgs_earthquake.md) | none | FDSN spec quake events |
+| `nominatim` | geo | [nominatim.md](nominatim.md) | none | OSM geocoding, 1 req/sec absolute |
+| `open_library` | knowledge | [open_library.md](open_library.md) | none | books, authors, ISBN |
+| `rest_countries` | geo | [rest_countries.md](rest_countries.md) | none | country metadata |
+| `open_food_facts` | knowledge | [open_food_facts.md](open_food_facts.md) | none | packaged food + barcodes |
+| `openaq` | weather | [openaq.md](openaq.md) | optional | global air-quality measurements |
+| `photon` | geo | [photon.md](photon.md) | none | OSM geocoding, faster alt to Nominatim |
+| `worldtime` | geo | [worldtime.md](worldtime.md) | none | timezone + DST |
+| `nager_holidays` | knowledge | [nager_holidays.md](nager_holidays.md) | none | public holidays, ~100 countries |
+| `ip_api` | geo | [ip_api.md](ip_api.md) | none | IP geolocation; non-commercial only |
+| `themealdb` | knowledge | [themealdb.md](themealdb.md) | none | recipes — test endpoint |
+| `thecocktaildb` | knowledge | [thecocktaildb.md](thecocktaildb.md) | none | cocktails — test endpoint |
+
+## Needs key or login (free tier)
+
+| Source | Category | Reference | Env var | Account URL | Daily | Monthly | Notes |
+|---|---|---|---|---|---|---|---|
+| `fred` | finance | [fred.md](fred.md) | `FRED_KEY` | https://fred.stlouisfed.org/docs/api/api_key.html | — | — | ~800k US/global econ time series |
+| `nasa` | science | [nasa.md](nasa.md) | `NASA_KEY` | https://api.nasa.gov/ | 1000/hr | — | APOD/NEO/EPIC/EONET/Mars |
+| `congress_gov` | government | [congress_gov.md](congress_gov.md) | `CONGRESS_KEY` | https://api.congress.gov/sign-up/ | — | — | bills, votes, members |
+| `bls` | government | [bls.md](bls.md) | `BLS_KEY` | https://data.bls.gov/registrationEngine/ | 500 | — | US labor / CPI / employment |
+| `govinfo` | government | [govinfo.md](govinfo.md) | `GOVINFO_KEY` | https://api.govinfo.gov/docs/ | — | — | Cong. Record, CFR, US Code |
+| `alpha_vantage` | finance | [alpha_vantage.md](alpha_vantage.md) | `ALPHA_VANTAGE_KEY` | https://www.alphavantage.co/support/#api-key | **25** | **750** | stocks, forex, fundamentals |
+| `semantic_scholar` | science | [semantic_scholar.md](semantic_scholar.md) | `SEMANTIC_SCHOLAR_KEY` | https://www.semanticscholar.org/product/api | — | — | 100M+ papers, citation graph |
+| `usda_fooddata` | health | [usda_fooddata.md](usda_fooddata.md) | `USDA_KEY` | https://api.nal.usda.gov/fdc/ | — | — | authoritative US nutrition |
+| `courtlistener` | government | [courtlistener.md](courtlistener.md) | `COURTLISTENER_KEY` | https://www.courtlistener.com/help/api/rest/ | — | — | federal + state case law |
+| `fec` | government | [fec.md](fec.md) | `FEC_KEY` | https://api.open.fec.gov/developers/ | — | — | campaign finance |
+| `geonames` | geo | [geonames.md](geonames.md) | `GEONAMES_USERNAME` | https://www.geonames.org/login | 20000 | — | populated places, elevation, timezone |
+
+---
+
+## Routing hints (which source for which question)
+
+| If the user asks… | Try first |
+|---|---|
+| "What is X" / general factual lookup | `wikipedia` summary, then `wikidata` for structured facts |
+| "What's filed by company X" | `sec_edgar` |
+| "Recent news about X" | `gdelt` |
+| "Papers about X" | `openalex` (breadth) → `semantic_scholar` (curation) |
+| "Biomedical evidence about X" | `pubmed` |
+| "What's the weather / will rain / past weather" | `noaa_nws` (US official) or `open_meteo` (global, history) |
+| "Air quality / pollen" | `open_meteo` (air_quality, pollen) or `openaq` |
+| "Recent earthquakes" | `usgs_earthquake` |
+| "Where is / coordinates of" | `nominatim` (1 req/sec) or `photon` |
+| "OSM features near X" | `overpass` |
+| "US economic data" (GDP, CPI, unemployment) | `fred` (most comprehensive) or `bls` (labor only) |
+| "Global development indicators" | `world_bank` |
+| "Stock price / fundamentals" | `alpha_vantage` (mind 25/day cap) |
+| "Federal regulation / rule" | `federal_register` (recent) or `govinfo` (CFR/USC) |
+| "Bill / vote / member of Congress" | `congress_gov` |
+| "Federal contract / grant" | `usaspending` |
+| "Court opinion / case law" | `courtlistener` |
+| "Campaign finance" | `fec` |
+| "Nutrition / barcode" | `usda_fooddata` (nutrition) or `open_food_facts` (barcode) |
+| "Holidays / time zone / IP location" | `nager_holidays`, `worldtime`, `ip_api` |
+| "Country facts" | `rest_countries` (basics) or `world_bank` (indicators) |
+| "Book / ISBN" | `open_library` |
+| "NASA / asteroid / rover photo / disaster" | `nasa` |
+
+When in doubt, fall back to `wikipedia` → `wikidata` chain — it's the universal fallback and requires no auth.
+
+## Adding a new source
+
+1. Append the entry to `scripts/sources.yml` following the existing schema. Validate any URL templates and parameter names against the source's docs.
+2. Write `references/sources/<name>.md` using `_template.md` as the skeleton.
+3. Add a row to this index in the appropriate section.
+4. If the source needs custom multi-step logic, write `scripts/sources/<name>.py` exporting `query(action, params, auth)`.
+5. Bump version in SKILL.md (MINOR — new source = new behavior). Update README + CHANGELOG.
+
+## Out of scope (intentionally excluded)
+
+- Crypto market data, decentralized data sources
+- Social platforms (Twitter/X, Reddit, Mastodon, Bluesky)
+- Generic web search (Reach is "what is", not "find me a webpage")
+- Anything requiring paid tier for first call
+
+These were excluded from the original ranking and remain out of scope for v3. If you need any of them, propose an addition explicitly.
