@@ -3,7 +3,7 @@ name: ocas-reach
 description: >
   Reach: live world-data query engine. Queries real-time external APIs for
   factual ground truth — no synthesis, no opinion, no research. Routes
-  requests through a registry of ~37 registered sources covering US
+  requests through a registry of ~38 registered sources covering US
   government data, scholarly literature, weather and hazards, geocoding,
   finance and macro indicators, court records, nutrition, news events,
   property records. Trigger phrases: 'what's happening with', 'lookup
@@ -15,7 +15,7 @@ description: >
 metadata:
   author: Indigo Karasu
   email: mx.indigo.karasu@gmail.com
-  version: "3.0.0"
+  version: "3.1.0"
   hermes:
     tags: [world-data, government, science, weather, geo, finance, health, sources]
     category: signal
