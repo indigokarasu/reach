@@ -3,7 +3,7 @@ name: ocas-reach
 description: >
   Reach: live world-data query engine. Queries real-time external APIs for
   factual ground truth — no synthesis, no opinion, no research. Routes
-  requests through a registry of ~38 registered sources covering US
+  requests through a registry of ~48 registered sources covering US
   government data, scholarly literature, weather and hazards, geocoding,
   finance and macro indicators, court records, nutrition, news events,
   property records. Trigger phrases: 'what's happening with', 'lookup
@@ -15,7 +15,7 @@ description: >
 metadata:
   author: Indigo Karasu
   email: mx.indigo.karasu@gmail.com
-  version: "3.1.0"
+  version: "3.2.0"
   hermes:
     tags: [world-data, government, science, weather, geo, finance, health, sources]
     category: signal
@@ -82,7 +82,7 @@ The authoritative source list lives in [`scripts/sources.yml`](scripts/sources.y
 - Endpoint definitions per action
 - Optional daily / monthly hard caps
 
-Sources currently registered (37): see the [index](references/sources/index.md).
+Sources currently registered (48): see the [index](references/sources/index.md).
 
 ## Account-creation grant (explicit)
 
@@ -161,6 +161,16 @@ python3 scripts/reach.py query <source> <action> '<params_json>'
 |---|---|
 | `references/sources/index.md` | Picking which source to use; routing hints |
 | `references/sources/<slug>.md` | Building a specific source's query — actions, params, response shape, pitfalls |
+| `references/sources/census.md` | US Census Bureau — demographics, population, economic census |
+| `references/sources/epa_echo.md` | EPA ECHO — environmental compliance, facility violations |
+| `references/sources/hifld.md` | HIFLD — critical infrastructure (hospitals, power, dams) |
+| `references/sources/nonprofit_explorer.md` | Nonprofit Explorer — IRS 990 data, nonprofit financials |
+| `references/sources/ncbi_datasets.md` | NCBI Datasets — genomic data, gene function, taxonomy |
+| `references/sources/airnow.md` | AirNow — official US EPA Air Quality Index |
+| `references/sources/space_weather.md` | Space Weather — solar flares, geomagnetic storms, ISS location |
+| `references/sources/exchangerate.md` | ExchangeRate.host — currency exchange rates |
+| `references/sources/transit_land.md` | Transit Land — transit routes, stops, schedules |
+| `references/sources/ev_charging.md` | Open Charge Map — EV charging station locations |
 | `references/account_provisioning.md` | Registering at a source that requires an account |
 | `references/usage_tracking.md` | Understanding quotas and where usage is logged |
 | `references/katzilla.md` | Legacy katzilla connector (not yet in registry) |

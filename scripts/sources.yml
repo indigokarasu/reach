@@ -909,3 +909,234 @@ sources:
         method: GET
         path: /categories
         params_in: query
+
+  # ============================================================
+  # GOVERNMENT — US (no key) — batch 2
+  # ============================================================
+  census:
+    category: government
+    reference: census.md
+    auth: none
+    account: null
+    base_url: https://api.census.gov/data
+    rate: no documented cap; 500/day recommended polite default
+    actions:
+      acs:
+        method: GET
+        path: /{year}/acs/acs1
+        params_in: path
+        defaults: { get: NAME }
+      decennial:
+        method: GET
+        path: /{year}/dec/pl
+        params_in: path
+        defaults: { get: NAME,_for: us:1 }
+      population:
+        method: GET
+        path: /{year}/pep/population
+        params_in: path
+        defaults: { get: POP_2020,for: "*" }
+
+  epa_echo:
+    category: government
+    reference: epa_echo.md
+    auth: none
+    account: null
+    base_url: https://echodata.epa.gov/echo
+    rate: no documented cap; throttle to <2/sec
+    actions:
+      facility_search:
+        method: GET
+        path: /echo_rest_services.get_facilities
+        params_in: query
+        defaults: { output: JSON }
+      compliance_report:
+        method: GET
+        path: /echo_rest_services.get_compliance_report
+        params_in: query
+        defaults: { output: JSON }
+      effluent_chart:
+        method: GET
+        path: /echo_rest_services.get_effluent_chart
+        params_in: query
+        defaults: { output: JSON }
+
+  hifld:
+    category: government
+    reference: hifld.md
+    auth: none
+    account: null
+    base_url: https://services1.arcgis.com/Hp6G80Pky0om7QvQ/arcgis/rest/services
+    rate: no documented cap; standard ArcGIS REST terms
+    actions:
+      query:
+        method: GET
+        path: /{service}/FeatureServer/0/query
+        params_in: query
+        defaults: { where: "1=1", outFields: "*", f: json, resultRecordCount: 10 }
+
+  nonprofit_explorer:
+    category: government
+    reference: nonprofit_explorer.md
+    auth: none
+    account: null
+    base_url: https://projects.propublica.org/nonprofits/api/v2
+    rate: no documented cap; throttle to <1/sec
+    actions:
+      search:
+        method: GET
+        path: /search.json
+        params_in: query
+      organization:
+        method: GET
+        path: /organizations/{ein}.json
+        params_in: path
+
+  # ============================================================
+  # HEALTH + SCIENCE (no key) — batch 2
+  # ============================================================
+  ncbi_datasets:
+    category: health
+    reference: ncbi_datasets.md
+    auth: none
+    account: null
+    base_url: https://api.ncbi.nlm.nih.gov/datasets/v2alpha
+    rate: no documented cap; throttle to <3/sec
+    actions:
+      gene:
+        method: GET
+        path: /gene/symbol/{symbol}/taxon/{taxon}
+        params_in: path
+      genome:
+        method: GET
+        path: /genome/accession/{accession}
+        params_in: path
+      taxonomy:
+        method: GET
+        path: /taxonomy/{taxon_id}
+        params_in: path
+
+  airnow:
+    category: weather
+    reference: airnow.md
+    auth: required
+    env_var: AIRNOW_KEY
+    account: required
+    account_url: https://docs.airnowapi.org/
+    base_url: https://www.airnowapi.org/aq
+    rate: 1000/hour (free tier)
+    actions:
+      observation_zip:
+        method: GET
+        path: /observation/zipCode/current/
+        params_in: query
+        defaults: { format: application/json, distance: 25 }
+      observation_latlon:
+        method: GET
+        path: /observation/latLong/current/
+        params_in: query
+        defaults: { format: application/json, distance: 25 }
+      forecast:
+        method: GET
+        path: /forecast/zipCode/
+        params_in: query
+        defaults: { format: application/json }
+
+  space_weather:
+    category: science
+    reference: space_weather.md
+    auth: none
+    account: null
+    base_url: https://api.nasa.gov/DONKI
+    rate: no documented cap; throttle to <1/sec
+    actions:
+      cme:
+        method: GET
+        path: /CME
+        params_in: query
+      gst:
+        method: GET
+        path: /GST
+        params_in: query
+      ips:
+        method: GET
+        path: /IPS
+        params_in: query
+      iss_location:
+        method: GET
+        path: /iss-now.json
+        params_in: query
+        base_override: http://api.open-notify.org
+
+  # ============================================================
+  # FINANCE (no key) — batch 2
+  # ============================================================
+  exchangerate:
+    category: finance
+    reference: exchangerate.md
+    auth: none
+    account: null
+    base_url: https://api.exchangerate.host
+    rate: no published cap; throttle to <1/sec
+    actions:
+      latest:
+        method: GET
+        path: /latest
+        params_in: query
+      historical:
+        method: GET
+        path: /{date}
+        params_in: path
+      convert:
+        method: GET
+        path: /convert
+        params_in: query
+      timeseries:
+        method: GET
+        path: /timeseries
+        params_in: query
+
+  # ============================================================
+  # GEO + TRANSIT (no key) — batch 2
+  # ============================================================
+  transit_land:
+    category: geo
+    reference: transit_land.md
+    auth: none
+    account: optional
+    base_url: https://transit.land/api/v2/rest
+    rate: 1000/hour anonymous, key available for higher
+    actions:
+      routes:
+        method: GET
+        path: /routes
+        params_in: query
+      stops:
+        method: GET
+        path: /stops
+        params_in: query
+      operators:
+        method: GET
+        path: /operators
+        params_in: query
+      schedule:
+        method: GET
+        path: /schedule_stop_pairs
+        params_in: query
+
+  ev_charging:
+    category: geo
+    reference: ev_charging.md
+    auth: none
+    account: optional
+    base_url: https://api.openchargemap.io/v3
+    rate: no published cap; throttle to <2/sec
+    actions:
+      poi:
+        method: GET
+        path: /poi/
+        params_in: query
+      reference_data:
+        method: GET
+        path: /referencedata/
+        params_in: query

@@ -47,6 +47,15 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | `ip_api` | geo | [ip_api.md](ip_api.md) | none | IP geolocation; non-commercial only |
 | `themealdb` | knowledge | [themealdb.md](themealdb.md) | none | recipes — test endpoint |
 | `thecocktaildb` | knowledge | [thecocktaildb.md](thecocktaildb.md) | none | cocktails — test endpoint |
+| `census` | government | [census.md](census.md) | none | demographics, population, economic census |
+| `epa_echo` | government | [epa_echo.md](epa_echo.md) | none | environmental compliance, facility violations |
+| `hifld` | government | [hifld.md](hifld.md) | none | critical infrastructure (hospitals, power, dams) |
+| `nonprofit_explorer` | government | [nonprofit_explorer.md](nonprofit_explorer.md) | none | IRS 990 data, nonprofit financials |
+| `ncbi_datasets` | health | [ncbi_datasets.md](ncbi_datasets.md) | none | genomic data, gene function, taxonomy |
+| `space_weather` | science | [space_weather.md](space_weather.md) | none | solar flares, geomagnetic storms, ISS location |
+| `exchangerate` | finance | [exchangerate.md](exchangerate.md) | none | currency exchange rates, no key needed |
+| `transit_land` | geo | [transit_land.md](transit_land.md) | none | transit routes, stops, schedules worldwide |
+| `ev_charging` | geo | [ev_charging.md](ev_charging.md) | none | EV charging station locations worldwide |
 
 ## Needs key or login (free tier)
 
@@ -63,6 +72,7 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | `courtlistener` | government | [courtlistener.md](courtlistener.md) | `COURTLISTENER_KEY` | https://www.courtlistener.com/help/api/rest/ | — | — | federal + state case law |
 | `fec` | government | [fec.md](fec.md) | `FEC_KEY` | https://api.open.fec.gov/developers/ | — | — | campaign finance |
 | `geonames` | geo | [geonames.md](geonames.md) | `GEONAMES_USERNAME` | https://www.geonames.org/login | 20000 | — | populated places, elevation, timezone |
+| `airnow` | weather | [airnow.md](airnow.md) | `AIRNOW_KEY` | https://docs.airnowapi.org/ | — | — | official US EPA Air Quality Index |
 
 ---
 
@@ -93,6 +103,16 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | "Country facts" | `rest_countries` (basics) or `world_bank` (indicators) |
 | "Book / ISBN" | `open_library` |
 | "NASA / asteroid / rover photo / disaster" | `nasa` |
+| "Solar flare / geomagnetic storm / ISS location" | `space_weather` |
+| "US demographics / population / income by area" | `census` |
+| "Environmental compliance / facility violations" | `epa_echo` |
+| "Hospitals / power plants / critical infrastructure near X" | `hifld` |
+| "Nonprofit financials / IRS 990 data" | `nonprofit_explorer` |
+| "Gene info / genome / taxonomy" | `ncbi_datasets` |
+| "US air quality index (official EPA)" | `airnow` |
+| "Currency exchange rates / convert currency" | `exchangerate` |
+| "Transit routes / stops / schedules" | `transit_land` |
+| "EV charging stations near X" | `ev_charging` |
 
 When in doubt, fall back to `wikipedia` → `wikidata` chain — it's the universal fallback and requires no auth.
 
