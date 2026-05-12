@@ -37,6 +37,7 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | `usgs_earthquake` | weather | [usgs_earthquake.md](usgs_earthquake.md) | none | FDSN spec quake events |
 | `nominatim` | geo | [nominatim.md](nominatim.md) | none | OSM geocoding, 1 req/sec absolute |
 | `open_library` | knowledge | [open_library.md](open_library.md) | none | books, authors, ISBN |
+| `public_apis` | knowledge | [public_apis.md](public_apis.md) | none | collective directory of free public APIs |
 | `rest_countries` | geo | [rest_countries.md](rest_countries.md) | none | country metadata |
 | `open_food_facts` | knowledge | [open_food_facts.md](open_food_facts.md) | none | packaged food + barcodes |
 | `openaq` | weather | [openaq.md](openaq.md) | optional | global air-quality measurements |
