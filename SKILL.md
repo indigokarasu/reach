@@ -15,7 +15,7 @@ description: >
 metadata:
   author: Indigo Karasu
   email: mx.indigo.karasu@gmail.com
-  version: "3.2.0"
+  version: "3.5.0"
   hermes:
     tags: [world-data, government, science, weather, geo, finance, health, sources]
     category: signal
@@ -173,6 +173,7 @@ python3 scripts/reach.py query <source> <action> '<params_json>'
 | `references/sources/ev_charging.md` | Open Charge Map — EV charging station locations |
 | `references/account_provisioning.md` | Registering at a source that requires an account |
 | `references/usage_tracking.md` | Understanding quotas and where usage is logged |
+| `references/source-evaluation-framework.md` | Evaluating new source candidates — decision tree, duplication checks, rejection categories |
 | `references/katzilla.md` | Legacy katzilla connector (not yet in registry) |
 | `references/property_lookup.md` | Legacy property_lookup connector (not yet in registry) |
 
