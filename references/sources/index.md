@@ -76,6 +76,18 @@ When the **Account** column says `required`, Reach is authorized to register at 
 
 ---
 
+## Media and social sources
+
+| Source | Category | Reference | Auth | Account | Notes |
+|--------|----------|-----------|------|---------|-------|
+| `reddit` | media | [reddit.md](reddit.md) | optional | optional | Reddit browser via MCP. Anonymous (10/min) or OAuth (60-100/min). |
+| `linkedin` | media | [linkedin.md](linkedin.md) | required | required | LinkedIn profiles, companies, jobs via browser automation. Requires login. |
+| `paper_search` | science | [paper_search.md](paper_search.md) | optional | null | Multi-source academic paper search (arXiv, PubMed, Semantic Scholar, etc.). |
+| `searxng` | media | [searxng.md](searxng.md) | none | null | Local SearXNG metasearch. Open web + social media search. No key needed. |
+| `yahoo_finance` | finance | [yahoo_finance.md](yahoo_finance.md) | none | null | Yahoo Finance MCP. Prices, financials, news, recommendations, options. No key. |
+
+---
+
 ## Routing hints (which source for which question)
 
 | If the user asks… | Try first |
@@ -113,6 +125,12 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | "Currency exchange rates / convert currency" | `exchangerate` |
 | "Transit routes / stops / schedules" | `transit_land` |
 | "EV charging stations near X" | `ev_charging` |
+| "What are people saying about X on Reddit" | `reddit` search |
+| "Find papers about X" | `paper_search` search (multi-source) |
+| "Look up person on LinkedIn" | `linkedin` person_profile |
+| "Find employees at company X" | `linkedin` company_employees |
+| "Search jobs for X" | `linkedin` search_jobs |
+| "Company X posts on LinkedIn" | `linkedin` company_posts |
 
 When in doubt, fall back to `wikipedia` → `wikidata` chain — it's the universal fallback and requires no auth.
 
@@ -127,8 +145,12 @@ When in doubt, fall back to `wikipedia` → `wikidata` chain — it's the univer
 ## Out of scope (intentionally excluded)
 
 - Crypto market data, decentralized data sources
-- Social platforms (Twitter/X, Reddit, Mastodon, Bluesky)
-- Generic web search (Reach is "what is", not "find me a webpage")
+- Social platforms not yet added: Twitter/X, Mastodon, Bluesky (Reddit and LinkedIn now supported)
+- Generic web search (SearXNG now covers open web search; for deep research, use Sift)
 - Anything requiring paid tier for first call
+- MCP wrappers around APIs already registered as sources (prefer direct API integration)
+- Generic web scraping proxies (belongs in Sift)
+- Dark web / Tor access tools (belongs in Scout)
+- MCP infrastructure/platform services (not data sources)
 
-These were excluded from the original ranking and remain out of scope for v3. If you need any of them, propose an addition explicitly.
+For the full evaluation framework including decision tree and rejection categories, see [`references/source-evaluation-framework.md`](../source-evaluation-framework.md).
