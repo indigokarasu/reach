@@ -622,10 +622,150 @@ sources:
         auth_param: api_key
         defaults:
           format: json
+      bill_actions:
+        method: GET
+        path: /bill/{congress}/{type}/{number}/actions
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      bill_amendments:
+        method: GET
+        path: /bill/{congress}/{type}/{number}/amendments
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      bill_committees:
+        method: GET
+        path: /bill/{congress}/{type}/{number}/committees
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      bill_cosponsors:
+        method: GET
+        path: /bill/{congress}/{type}/{number}/cosponsors
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      bill_relatedbills:
+        method: GET
+        path: /bill/{congress}/{type}/{number}/relatedbills
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      bill_subjects:
+        method: GET
+        path: /bill/{congress}/{type}/{number}/subjects
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      bill_summaries:
+        method: GET
+        path: /bill/{congress}/{type}/{number}/summaries
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      bill_text:
+        method: GET
+        path: /bill/{congress}/{type}/{number}/text
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      bill_titles:
+        method: GET
+        path: /bill/{congress}/{type}/{number}/titles
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      amendment:
+        method: GET
+        path: /amendment/{congress}/{type}/{number}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      amendments:
+        method: GET
+        path: /amendment
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      congress:
+        method: GET
+        path: /congress/{congress}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      congress_list:
+        method: GET
+        path: /congress
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      law:
+        method: GET
+        path: /law/{congress}/{type}/{number}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      laws:
+        method: GET
+        path: /law
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
       member:
         method: GET
         path: /member/{bioguide_id}
         params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      member_cosponsored:
+        method: GET
+        path: /member/{bioguide_id}/cosponsored-legislation
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      member_sponsored:
+        method: GET
+        path: /member/{bioguide_id}/sponsored-legislation
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      member_congress:
+        method: GET
+        path: /member/congress/{congress}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      member_state:
+        method: GET
+        path: /member/{state_code}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      members:
+        method: GET
+        path: /member
+        params_in: query
         auth_param: api_key
         defaults:
           format: json
@@ -636,9 +776,254 @@ sources:
         auth_param: api_key
         defaults:
           format: json
+      votes:
+        method: GET
+        path: /house-vote
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
       committee:
         method: GET
         path: /committee
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      committee_detail:
+        method: GET
+        path: /committee/{chamber}/{code}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      committee_bills:
+        method: GET
+        path: /committee/{chamber}/{code}/bills
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      committee_reports:
+        method: GET
+        path: /committee/{chamber}/{code}/reports
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      committee_nominations:
+        method: GET
+        path: /committee/{chamber}/{code}/nominations
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      committee_meeting:
+        method: GET
+        path: /committee-meeting/{congress}/{chamber}/{event_id}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      committee_meetings:
+        method: GET
+        path: /committee-meeting
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      committee_print:
+        method: GET
+        path: /committee-print/{congress}/{chamber}/{jacket_number}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      committee_prints:
+        method: GET
+        path: /committee-print
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      committee_report:
+        method: GET
+        path: /committee-report/{congress}/{type}/{number}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      committee_report_text:
+        method: GET
+        path: /committee-report/{congress}/{type}/{number}/text
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      nomination:
+        method: GET
+        path: /nomination/{congress}/{number}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      nominations:
+        method: GET
+        path: /nomination
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      nomination_actions:
+        method: GET
+        path: /nomination/{congress}/{number}/actions
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      nomination_committees:
+        method: GET
+        path: /nomination/{congress}/{number}/committees
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      nomination_hearings:
+        method: GET
+        path: /nomination/{congress}/{number}/hearings
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      treaty:
+        method: GET
+        path: /treaty/{congress}/{number}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      treaties:
+        method: GET
+        path: /treaty
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      treaty_actions:
+        method: GET
+        path: /treaty/{congress}/{number}/actions
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      treaty_committees:
+        method: GET
+        path: /treaty/{congress}/{number}/committees
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      summaries:
+        method: GET
+        path: /summaries
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      crsreport:
+        method: GET
+        path: /crsreport/{report_number}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      crsreports:
+        method: GET
+        path: /crsreport
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      hearing:
+        method: GET
+        path: /hearing/{congress}/{chamber}/{jacket_number}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      hearings:
+        method: GET
+        path: /hearing
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      house_communication:
+        method: GET
+        path: /house-communication/{congress}/{type}/{number}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      house_communications:
+        method: GET
+        path: /house-communication
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      senate_communication:
+        method: GET
+        path: /senate-communication/{congress}/{type}/{number}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      senate_communications:
+        method: GET
+        path: /senate-communication
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      house_requirement:
+        method: GET
+        path: /house-requirement/{requirement_number}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      house_requirements:
+        method: GET
+        path: /house-requirement
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      daily_congressional_record:
+        method: GET
+        path: /daily-congressional-record/{volume}/{issue}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      daily_congressional_records:
+        method: GET
+        path: /daily-congressional-record
+        params_in: query
+        auth_param: api_key
+        defaults:
+          format: json
+      bound_congressional_record:
+        method: GET
+        path: /bound-congressional-record/{year}/{month}/{day}
+        params_in: path
+        auth_param: api_key
+        defaults:
+          format: json
+      bound_congressional_records:
+        method: GET
+        path: /bound-congressional-record
         params_in: query
         auth_param: api_key
         defaults:
@@ -1140,3 +1525,122 @@ sources:
         method: GET
         path: /referencedata/
         params_in: query
+
+  searxng:
+    category: media
+    reference: searxng.md
+    auth: none
+    account: null
+    base_url: http://localhost:8888
+    rate: no published cap; throttle to <5/sec
+    actions:
+      search:
+        description: "Open web search via SearXNG. params: {query, language, categories, time_range, limit}"
+      search_social:
+        description: "Search social media via SearXNG (Reddit, Twitter/X, etc.). params: {query, language, time_range, limit}"
+
+  yahoo_finance:
+    category: finance
+    reference: yahoo_finance.md
+    auth: none
+    account: null
+    custom: yahoo_finance_mcp
+    rate: ~5 req/sec; yfinance library rate limits apply
+    base_url: https://query1.finance.yahoo.com
+    actions:
+      historical_prices:
+        description: "Get historical OHLCV data. params: {symbol, period, interval}"
+      stock_info:
+        description: "Get comprehensive stock metrics. params: {symbol}"
+      news:
+        description: "Get latest news. params: {symbol, count}"
+      financial_statement:
+        description: "Get financial statements. params: {symbol, statement_type, period}"
+      holder_info:
+        description: "Get holder info. params: {symbol, holder_type}"
+      recommendations:
+        description: "Get analyst recommendations. params: {symbol}"
+      options_chain:
+        description: "Get options chain. params: {symbol, expiration, option_type}"
+      stock_actions:
+        description: "Get dividends and splits. params: {symbol}"
+
+  reddit:
+    category: media
+    reference: reddit.md
+    auth: optional
+    account: optional
+    account_url: https://www.reddit.com/prefs/apps
+    custom: reddit_mcp_buddy
+    rate: 10/min anonymous, 60/min app-only, 100/min authenticated
+    base_url: https://www.reddit.com
+    actions:
+      browse:
+        description: "Browse a subreddit. params: {subreddit, sort, time, limit}"
+      search:
+        description: "Search Reddit. params: {query, subreddit, sort, time, limit}"
+      post:
+        description: "Get post details. params: {url} or {post_id, subreddit}"
+      user:
+        description: "Analyze a Reddit user. params: {username}"
+      explain:
+        description: "Explain a Reddit term. params: {term}"
+
+  paper_search:
+    category: science
+    reference: paper_search.md
+    auth: optional
+    account: null
+    custom: paper_search_mcp
+    rate: varies by underlying source; throttle to <5/sec overall
+    base_url: https://api.arxiv.org
+    actions:
+      search:
+        description: "Search papers across all sources. params: {query, limit, sources}"
+      arxiv:
+        description: "Search arXiv specifically. params: {query, limit}"
+      pubmed:
+        description: "Search PubMed. params: {query, limit}"
+      download:
+        description: "Download a paper PDF. params: {doi} or {url}, source"
+
+  linkedin:
+    category: media
+    reference: linkedin.md
+    auth: required
+    account: required
+    account_url: https://www.linkedin.com
+    custom: linkedin_mcp
+    rate: browser-based throttling; sequential tool calls only
+    base_url: https://www.linkedin.com
+    actions:
+      person_profile:
+        description: "Get a person's profile. params: {public_id, sections}"
+      my_profile:
+        description: "Get authenticated user's profile. params: {sections}"
+      company_profile:
+        description: "Get company info. params: {public_id, sections}"
+      company_posts:
+        description: "Get company posts. params: {public_id, limit}"
+      company_employees:
+        description: "List company employees. params: {public_id, keyword, limit}"
+      search_people:
+        description: "Search for people. params: {keywords, location, company, limit}"
+      search_companies:
+        description: "Search for companies. params: {keywords, limit}"
+      search_jobs:
+        description: "Search for jobs. params: {keywords, location, limit}"
+      job_details:
+        description: "Get job details. params: {job_id}"
+      feed:
+        description: "Get user's home feed. params: {limit}"
+      inbox:
+        description: "List conversations. params: {limit}"
+      conversation:
+        description: "Read a conversation. params: {username} or {thread_id}"
+      search_messages:
+        description: "Search messages. params: {query}"
+      send_message:
+        description: "Send a message. params: {username, message}"
+      sidebar_profiles:
+        description: "Get sidebar recommendations. params: {public_id}"
