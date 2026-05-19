@@ -1,5 +1,6 @@
 ---
 name: ocas-reach
+version: 3.5.0
 description: >
   Reach: live world-data query engine. Queries real-time external APIs for
   factual ground truth — no synthesis, no opinion, no research. Routes
@@ -222,6 +223,10 @@ Otherwise return an explicit error envelope and write the failure to `usage.json
 - **Rate-limit error responses still count toward usage.** A `429` response means the source got the call and rejected it; `usage.jsonl` records it. A `quota_blocked` (orchestrator-side) does NOT count against the source's cap because it never reached them.
 - **Account creation is logged but the secret is never logged.** Ledger entries record source / email / env var name / timestamps; the actual API key lives only in `~/.hermes/.env`.
 - **Non-commercial sources.** `ip_api`, `themealdb`, and `thecocktaildb` are explicit non-commercial-only on the free tier. Don't use them in commercial-bearing user contexts.
+
+## Ontology types
+
+Reach does not extract entities or emit Signals to Chronicle. It is a query passthrough — entity extraction from returned data is the responsibility of the calling skill.
 
 ## Visibility
 
