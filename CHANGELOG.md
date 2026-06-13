@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.6.0] - 2026-05-28
+
+### Added — Consolidated weather source
+
+- **`weather` source** — Unified weather connector wrapping NWS, SPC, METAR (aviationweather.gov), and Open-Meteo behind a single 7-action interface: `conditions`, `forecast`, `alerts`, `metar`, `brief`, `global`, `severe`. Logic ported from the hermes-weather-plugin by FahrenheitResearch (MIT). Pure Python, no Rust/binary dependencies.
+- **`scripts/sources/weather.py`** — Custom connector module. Handles multi-step NWS resolution (points → stations → observations), SPC GeoJSON parsing, and Open-Meteo unit selection.
+- **Routing hints updated**: all weather queries now route to `weather` first; `noaa_nws` and `open_meteo` retained for raw API shapes and archival access.
+- **Source count**: 53 → 54 registered sources.
+
+### Changed
+
+- SKILL.md version bumped 3.5.0 → 3.6.0.
+- `references/sources/index.md`: added `weather` entry to source table; replaced `noaa_nws`/`open_meteo` weather routing hints with `weather`-primary entries.
+
 ## [3.5.0] - 2026-05-13
 
 ### Added — Web search, social, and Yahoo Finance MCP

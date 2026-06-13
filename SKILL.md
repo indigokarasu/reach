@@ -1,26 +1,26 @@
 ---
 name: ocas-reach
-description: 'Reach: live world-data query engine. Queries real-time external APIs
-  for factual ground truth — no synthesis, no opinion, no research. Routes requests
-  through a registry of ~48 registered sources covering US government data, scholarly
-  literature, weather and hazards, geocoding, finance and macro indicators, court
-  records, nutrition, news events, property records. Trigger phrases: ''what''s happening
-  with'', ''lookup property'', ''current government data'', ''check earthquakes'',
-  ''congress bills'', ''fda recall'', ''find listing'', ''reach query'', ''fred series'',
-  ''recent papers about'', ''forecast for'', ''air quality at''. Do not use for web
-  research (use Sift), entity investigations (use Scout), or pattern analysis over
-  historical signals (use Corvus).
-
-  '
+description: 'Live world-data query engine. Queries real-time external APIs for factual ground truth — no synthesis, no opinion, no research. Routes requests through a registry of ~53 registered sources covering US government data, scholarly literature, weather and hazards, geocoding, finance and macro indicators, court records, nutrition, news events, property records, land due-diligence, and academic papers. Do not use for web research (use Sift), entity investigations (use Scout), or pattern analysis over historical signals (use Corvus).'
 license: MIT
 source: https://github.com/indigokarasu/reach
 includes:
-  - references/**
-  - scripts/**
-
+- references/**
+- scripts/**
 metadata:
-  author: Indigo Karasu
-  version: 3.5.0
+  author: Indigo Karasu (indigokarasu)
+  version: 3.9.0
+tags:
+- live-data
+- API
+- real-time
+- facts
+- research
+triggers:
+- live data query
+- real-time API
+- fact check
+- current data
+- external API query
 ---
 
 # ocas-reach: Live World-Data Query Engine
@@ -67,7 +67,7 @@ Reach functions normally when none of these are present.
 
 ## Source Registry
 
-The authoritative source list lives in `scripts/sources.yml` (48 sources). Browsable index: `references/sources/index.md`. See `references/credential-files.md` for credential storage, `references/account_provisioning.md` for account registration.
+The authoritative source list lives in `scripts/sources.yml` (52 sources). Browsable index: `references/sources/index.md`. See `references/credential-files.md` for credential storage, `references/account_provisioning.md` for account registration.
 
 ## Account Creation
 
@@ -128,25 +128,9 @@ Journal payload includes: `source`, `action`, `params`, `outcome` (`success` / `
 
 `reach.init` registers `reach:update` on first invocation. No operational background tasks beyond self-update — Reach is purely reactive to user/agent queries.
 
-## Self-update
+## Self-Update
 
-`reach.update` pulls the latest package from the `source:` URL in this file's frontmatter. Runs silently — no output unless the version changed or an error occurred.
-
-1. Read `source:` from frontmatter → extract `{owner}/{repo}` from URL
-2. Read local version from SKILL.md frontmatter `metadata.version`
-3. Fetch remote version from SKILL.md frontmatter: `gh api "repos/{owner}/{repo}/contents/SKILL.md" --jq '.content' | base64 -d | grep 'version:' | head -1 | sed 's/.*\"\(.*\)\".*/\1/'`
-4. If remote version equals local version → stop silently
-5. Download and install:
-   ```bash
-   TMPDIR=$(mktemp -d)
-   gh api "repos/{owner}/{repo}/tarball/main" > "$TMPDIR/archive.tar.gz"
-   mkdir "$TMPDIR/extracted"
-   tar xzf "$TMPDIR/archive.tar.gz" -C "$TMPDIR/extracted" --strip-components=1
-   cp -R "$TMPDIR/extracted/"* ./
-   rm -rf "$TMPDIR"
-   ```
-6. On failure → retry once. If second attempt fails, report the error and stop.
-7. Output exactly: `I updated Reach from version {old} to {new}`
+See `references/self-update-reach.md`.
 
 ## Validation rules
 

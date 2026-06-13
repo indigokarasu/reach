@@ -132,6 +132,33 @@ sources:
         method: GET
         path: /works/{key}.json
         params_in: path
+  scihub:
+    category: science
+    reference: scihub.md
+    auth: none
+    custom: scihub
+    base_url: https://sci-hub.box
+    rate: 30/min; be gentle, mirrors are fragile
+    mirrors:
+      - https://sci-hub.su
+      - https://sci-hub.red
+      - https://sci-hub.ren
+      - https://sci-hub.ru
+      - https://sci-hub.st
+      - https://sci-hub.box
+      - https://www.sci-hub.pub
+      - https://sci-hub.al
+      - https://sci-hub.mk
+      - https://sci-hub.ee
+    actions:
+      search_doi:
+        description: 'Search for a paper by DOI. params: { doi: "10.1038/nature09492" }'
+      search_title:
+        description: 'Search for a paper by title. params: { title: "Transformer Attention" }'
+      search_keyword:
+        description: 'Search papers by keyword. params: { keyword: "quantum computing", num_results: 10 }'
+      download_pdf:
+        description: 'Download a paper PDF. params: { pdf_url: "https://sci-hub.box/...", output_path: "/tmp/paper.pdf" }'
   sec_edgar:
     category: government
     reference: sec_edgar.md
@@ -186,6 +213,17 @@ sources:
         method: GET
         path: /references/toptier_agencies/
         params_in: query
+  unpaywall:
+    category: science
+    reference: unpaywall.md
+    auth: none
+    base_url: https://api.unpaywall.org/v2
+    rate: 100k/day polite pool; no key required
+    actions:
+      doi:
+        description: 'Look up open-access status + PDF URL by DOI. params: { doi: "10.1038/nature09492" }'
+      search:
+        description: 'Search for papers by title/keyword. params: { query: "transformer attention", is_oa: true }'
   gdelt:
     category: media
     reference: gdelt.md
@@ -1644,3 +1682,61 @@ sources:
         description: "Send a message. params: {username, message}"
       sidebar_profiles:
         description: "Get sidebar recommendations. params: {public_id}"
+
+  weather:
+    category: weather
+    reference: weather.md
+    auth: none
+    account: null
+    custom: weather
+    base_url: https://api.weather.gov
+    rate: no documented hard cap; keep below 5 req/sec
+    actions:
+      conditions:
+        description: "Current observed conditions at a US lat/lon. params: {lat, lon}"
+      forecast:
+        description: "NWS 7-day or hourly forecast. params: {lat, lon, hourly (bool)}"
+      alerts:
+        description: "Active NWS warnings/watches. params: {lat, lon} or {state}"
+      metar:
+        description: "Raw + decoded METAR for an ICAO station. params: {station}"
+      brief:
+        description: "Quick briefing — conditions + 3-period forecast + alerts in one call. params: {lat, lon}"
+      global:
+        description: "Current weather worldwide via Open-Meteo. params: {lat, lon, units (us|metric)}"
+      severe:
+        description: "SPC Day 1 categorical outlook + active watches. params: {state (optional)}"
+  welib:
+    category: knowledge
+    reference: welib.md
+    auth: none
+    base_url: https://welib.org/api/v1
+    rate: unknown; be conservative
+    note: "Cloudflare-protected; may require browser or residential proxy in some regions"
+    actions:
+      search:
+        description: "Search books and papers. params: {q: 'quantum physics', type: 'all', limit: 10}"
+      detail:
+        description: "Get item details by ID. params: {id: '...', type: 'book|paper'}"
+
+  acre_lens:
+    category: geo
+    reference: acre-lens.md
+    auth: none
+    account: null
+    custom: acre_lens_mcp
+    mcp: true
+    mcp_url: https://mcp.acrelens.com/mcp
+    transport: streamable-http
+    rate: ~1 req/min per tool; 60-120s async turnaround for analyze/compare
+    actions:
+      analyze_land:
+        description: "Full land analysis report (off_grid|rural_residential|recreational|investment). params: {address, state, mode, county?, acreage?, lat?, lng?}. Async — returns report_id + poll_url."
+      compare_properties:
+        description: "Compare 2-5 properties side by side. params: {properties: [{address, state, ...}], mode}. Async — returns batch_id + report_ids."
+      get_land_quick_score:
+        description: "Quick 0-100 suitability score. params: {address, state, mode}. Near-synchronous."
+      get_solar_potential:
+        description: "Solar energy estimate via NREL PVWatts. params: {address?, lat?, lng?, system_size_kw?}. Read-only."
+      get_state_land_profile:
+        description: "State-level land intelligence (regulation, climate, solar, water, building codes). params: {state_code, mode?}. Read-only."

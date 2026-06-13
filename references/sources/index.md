@@ -36,11 +36,15 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | `noaa_nws` | weather | [noaa_nws.md](noaa_nws.md) | none | official US forecasts + alerts |
 | `usgs_earthquake` | weather | [usgs_earthquake.md](usgs_earthquake.md) | none | FDSN spec quake events |
 | `nominatim` | geo | [nominatim.md](nominatim.md) | none | OSM geocoding, 1 req/sec absolute |
-| `open_library` | knowledge | [open_library.md](open_library.md) | none | books, authors, ISBN |
-| `public_apis` | knowledge | [public_apis.md](public_apis.md) | none | collective directory of free public APIs |
-| `rest_countries` | geo | [rest_countries.md](rest_countries.md) | none | country metadata |
-| `open_food_facts` | knowledge | [open_food_facts.md](open_food_facts.md) | none | packaged food + barcodes |
-| `openaq` | weather | [openaq.md](openaq.md) | optional | global air-quality measurements |
+|| `open_library` | knowledge | [open_library.md](open_library.md) | none | books, authors, ISBN |
+|| `scihub` | science | [scihub.md](scihub.md) | none | academic papers via Sci-Hub mirrors; ~85M papers |
+|| `unpaywall` | science | [unpaywall.md](unpaywall.md) | none | open-access paper lookup; ~30M papers, legal OA copies |
+|| `public_apis` | knowledge | [public_apis.md](public_apis.md) | none | collective directory of free public APIs |
+|| `rest_countries` | geo | [rest_countries.md](rest_countries.md) | none | country metadata |
+|| `open_food_facts` | knowledge | [open_food_facts.md](open_food_facts.md) | none | packaged food + barcodes |
+|| `weather` | weather | [weather.md](weather.md) | none | unified US weather: conditions, forecast, alerts, metar, brief + global via Open-Meteo. Default for all weather queries. |
+|| `welib` | knowledge | [welib.md](welib.md) | none | 43M books + 98M papers; Cloudflare-protected, may need browser |
+|| `openaq` | weather | [openaq.md](openaq.md) | optional | global air-quality measurements |
 | `photon` | geo | [photon.md](photon.md) | none | OSM geocoding, faster alt to Nominatim |
 | `worldtime` | geo | [worldtime.md](worldtime.md) | none | timezone + DST |
 | `nager_holidays` | knowledge | [nager_holidays.md](nager_holidays.md) | none | public holidays, ~100 countries |
@@ -85,6 +89,7 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | `paper_search` | science | [paper_search.md](paper_search.md) | optional | null | Multi-source academic paper search (arXiv, PubMed, Semantic Scholar, etc.). |
 | `searxng` | media | [searxng.md](searxng.md) | none | null | Local SearXNG metasearch. Open web + social media search. No key needed. |
 | `yahoo_finance` | finance | [yahoo_finance.md](yahoo_finance.md) | none | null | Yahoo Finance MCP. Prices, financials, news, recommendations, options. No key. |
+| `acre_lens` | geo | [acre-lens.md](acre-lens.md) | none | null | AcreLens MCP. US land due-diligence: solar, groundwater, flood zones, building codes, county regulations. No key. |
 
 ---
 
@@ -95,10 +100,17 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | "What is X" / general factual lookup | `wikipedia` summary, then `wikidata` for structured facts |
 | "What's filed by company X" | `sec_edgar` |
 | "Recent news about X" | `gdelt` |
-| "Papers about X" | `openalex` (breadth) → `semantic_scholar` (curation) |
-| "Biomedical evidence about X" | `pubmed` |
-| "What's the weather / will rain / past weather" | `noaa_nws` (US official) or `open_meteo` (global, history) |
-| "Air quality / pollen" | `open_meteo` (air_quality, pollen) or `openaq` |
+|| "Papers about X" | `openalex` (breadth) → `semantic_scholar` (curation) |
+|| "Is paper X open access?" | `unpaywall` (check OA status by DOI) |
+|| "Download paper PDF by DOI" | `unpaywall` (legal OA first) → `scihub` (mirror fallback) |
+|| "Get paper PDF" / "sci-hub" | `scihub` |
+|| "Find textbooks on X" | `welib` (books + papers) |
+|| "Biomedical evidence about X" | `pubmed` |
+| "What's the weather / will rain / forecast" | `weather` (brief, conditions, forecast) — US; `weather global` — international |
+| "Any weather alerts / warnings" | `weather alerts` |
+| "Severe weather risk / SPC outlook" | `weather severe` |
+| "Current weather worldwide" | `weather global` |
+| "METAR for airport X" | `weather metar` |
 | "Recent earthquakes" | `usgs_earthquake` |
 | "Where is / coordinates of" | `nominatim` (1 req/sec) or `photon` |
 | "OSM features near X" | `overpass` |
@@ -124,8 +136,13 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | "US air quality index (official EPA)" | `airnow` |
 | "Currency exchange rates / convert currency" | `exchangerate` |
 | "Transit routes / stops / schedules" | `transit_land` |
-| "EV charging stations near X" | `ev_charging` |
-| "What are people saying about X on Reddit" | `reddit` search |
+|| "EV charging stations near X" | `ev_charging` |
+|| "Analyze this land" / "tell me about this property" | `acre_lens analyze_land` |
+|| "Solar potential for this address" | `acre_lens get_solar_potential` |
+|| "Compare these two parcels" / "which property is better" | `acre_lens compare_properties` |
+|| "How suitable is this land" / "quick land score" | `acre_lens get_land_quick_score` |
+|| "Land regulations in state X" / "state land profile" | `acre_lens get_state_land_profile` |
+|| "What are people saying about X on Reddit" | `reddit` search |
 | "Find papers about X" | `paper_search` search (multi-source) |
 | "Look up person on LinkedIn" | `linkedin` person_profile |
 | "Find employees at company X" | `linkedin` company_employees |
@@ -140,7 +157,8 @@ When in doubt, fall back to `wikipedia` → `wikidata` chain — it's the univer
 2. Write `references/sources/<name>.md` using `_template.md` as the skeleton.
 3. Add a row to this index in the appropriate section.
 4. If the source needs custom multi-step logic, write `scripts/sources/<name>.py` exporting `query(action, params, auth)`.
-5. Bump version in SKILL.md (MINOR — new source = new behavior). Update README + CHANGELOG.
+5. **MCP connector sources:** Set `custom: <name>_mcp` and `mcp: true` in sources.yml. Add `mcp_url` and `transport` fields. No `base_url` needed for pure MCP servers. The MCP client handles tool invocation; Reach routes to it via the custom module.
+6. Bump version in SKILL.md (MINOR — new source = new behavior). Update README + CHANGELOG.
 
 ## Out of scope (intentionally excluded)
 
