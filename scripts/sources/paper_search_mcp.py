@@ -13,116 +13,12 @@ import subprocess
 import threading
 from typing import Any, Dict, Optional
 
+from ._mcp_client import MCPClient
 
-class _MCPClient:
-    """Minimal stdio JSON-RPC client for MCP servers."""
 
-    def __init__(self, cmd: list[str], env: Optional[dict] = None):
-        self._proc: Optional[subprocess.Popen] = None
-        self._cmd = cmd
-        self._env = env
-        self._lock = threading.Lock()
-        self._id_counter = 0
-
-    def start(self):
-        import os
-        env = os.environ.copy()
-        if self._env:
-            env.update(self._env)
-        self._proc = subprocess.Popen(
-            self._cmd,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            text=True,
-            bufsize=1,
-        )
-        self._initialize()
-
-    def _initialize(self):
-        req = {
-            "jsonrpc": "2.0",
-            "id": self._next_id(),
-            "method": "initialize",
-            "params": {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {},
-                "clientInfo": {"name": "ocas-reach", "version": "3.4.0"},
-            },
-        }
-        resp = self._send(req)
-        if "error" in resp:
-            raise RuntimeError(f"MCP init failed: {resp['error']}")
-        self._send_notification("notifications/initialized")
-
-    def call_tool(self, tool_name: str, arguments: dict) -> dict:
-        self._ensure_running()
-        req = {
-            "jsonrpc": "2.0",
-            "id": self._next_id(),
-            "method": "tools/call",
-            "params": {"name": tool_name, "arguments": arguments},
-        }
-        resp = self._send(req)
-        if "error" in resp:
-            return {"error": resp["error"].get("message", str(resp["error"])), "raw": resp["error"]}
-        result = resp.get("result", {})
-        content = result.get("content", [])
-        if not content:
-            return result
-        texts = []
-        for block in content:
-            if isinstance(block, dict) and block.get("type") == "text":
-                texts.append(block.get("text", ""))
-        combined = "\n".join(texts).strip()
-        if combined.startswith("{") or combined.startswith("["):
-            try:
-                return json.loads(combined)
-            except json.JSONDecodeError:
-                pass
-        return {"text": combined}
-
-    def _send(self, req: dict) -> dict:
-        self._ensure_running()
-        assert self._proc is not None
-        payload = json.dumps(req) + "\n"
-        self._proc.stdin.write(payload)  # type: ignore[union-attr]
-        self._proc.stdin.flush()  # type: ignore[union-attr]
-        line = self._proc.stdout.readline()  # type: ignore[union-attr]
-        if not line:
-            raise RuntimeError("MCP server closed stdout")
-        return json.loads(line)
-
-    def _send_notification(self, method: str, params: dict = None):
-        self._ensure_running()
-        assert self._proc is not None
-        req: dict[str, Any] = {"jsonrpc": "2.0", "method": method}
-        if params:
-            req["params"] = params
-        payload = json.dumps(req) + "\n"
-        self._proc.stdin.write(payload)  # type: ignore[union-attr]
-        self._proc.stdin.flush()  # type: ignore[union-attr]
-
-    def _next_id(self) -> int:
-        self._id_counter += 1
-        return self._id_counter
-
-    def _ensure_running(self):
-        if self._proc is None:
-            self.start()
-        elif self._proc.poll() is not None:
-            raise RuntimeError("MCP server process has exited")
-
-    def close(self):
-        proc = self._proc
-        self._proc = None
-        if proc is not None and proc.poll() is None:
-            try:
-                proc.stdin.close()  # type: ignore[union-attr]
-            except Exception:
-                pass
-            proc.wait(timeout=5)
+class _MCPClient(MCPClient):
+    """Paper-search-specific MCP client (uses python3 -m launcher)."""
+    pass
 
 
 # ── Module-level client cache ──────────────────────────────────────────────
@@ -163,51 +59,76 @@ def query(action: str, params: dict, auth: dict) -> dict:
       biorxiv      — Search bioRxiv. Params: query, limit
       medrxiv      — Search medRxiv. Params: query, limit
       google_scholar — Search Google Scholar. Params: query, limit
-      download     — Download a paper PDF. Params: paper_id, source
+      download     — Download a paper PDF. Params: doi or url, source
     """
     client = _get_client(auth)
 
     try:
-        if action == "search" or action == "arxiv":
-            return _action_search_source(client, "search_arxiv", params)
-        elif action == "pubmed":
-            return _action_search_source(client, "search_pubmed", params)
-        elif action == "biorxiv":
-            return _action_search_source(client, "search_biorxiv", params)
-        elif action == "medrxiv":
-            return _action_search_source(client, "search_medrxiv", params)
-        elif action == "google_scholar":
-            return _action_search_source(client, "search_google_scholar", params)
-        elif action == "download":
-            return _action_download(client, params)
-        else:
-            return {"error": f"Unknown action: {action}",
-                    "valid_actions": ["search", "arxiv", "pubmed", "biorxiv", "medrxiv", "google_scholar", "download"]}
+        action_map = {
+            "search": _action_search,
+            "arxiv": _action_arxiv,
+            "pubmed": _action_pubmed,
+            "biorxiv": _action_biorxiv,
+            "medrxiv": _action_medrxiv,
+            "google_scholar": _action_google_scholar,
+            "download": _action_download,
+        }
+        handler = action_map.get(action)
+        if handler is None:
+            return {"error": f"Unknown action: {action}", "valid_actions": list(action_map.keys())}
+        return handler(client, params)
     except Exception as e:
         _close_client()
         return {"error": str(e), "action": action}
 
 
-def _action_search_source(client: _MCPClient, tool_name: str, params: dict) -> dict:
-    args = {
-        "query": params.get("query", ""),
-        "limit": int(params.get("limit", 10)),
-    }
-    return client.call_tool(tool_name, args)
+def _action_search(client: _MCPClient, params: dict) -> dict:
+    args = {"query": params.get("query", "")}
+    if params.get("limit"):
+        args["limit"] = int(params["limit"])
+    if params.get("sources"):
+        args["sources"] = params["sources"]
+    return client.call_tool("search", args)
+
+
+def _action_arxiv(client: _MCPClient, params: dict) -> dict:
+    args = {"query": params.get("query", "")}
+    if params.get("limit"):
+        args["limit"] = int(params["limit"])
+    return client.call_tool("search_arxiv", args)
+
+
+def _action_pubmed(client: _MCPClient, params: dict) -> dict:
+    args = {"query": params.get("query", "")}
+    if params.get("limit"):
+        args["limit"] = int(params["limit"])
+    return client.call_tool("search_pubmed", args)
+
+
+def _action_biorxiv(client: _MCPClient, params: dict) -> dict:
+    args = {"query": params.get("query", "")}
+    if params.get("limit"):
+        args["limit"] = int(params["limit"])
+    return client.call_tool("search_biorxiv", args)
+
+
+def _action_medrxiv(client: _MCPClient, params: dict) -> dict:
+    args = {"query": params.get("query", "")}
+    if params.get("limit"):
+        args["limit"] = int(params["limit"])
+    return client.call_tool("search_medrxiv", args)
+
+
+def _action_google_scholar(client: _MCPClient, params: dict) -> dict:
+    args = {"query": params.get("query", "")}
+    if params.get("limit"):
+        args["limit"] = int(params["limit"])
+    return client.call_tool("search_google_scholar", args)
 
 
 def _action_download(client: _MCPClient, params: dict) -> dict:
-    source = params.get("source", "arxiv")
-    paper_id = params.get("paper_id", "")
-    if not paper_id:
-        return {"error": "download requires 'paper_id'"}
-    tool_map = {
-        "arxiv": "download_arxiv",
-        "pubmed": "download_pubmed",
-        "biorxiv": "download_biorxiv",
-        "medrxiv": "download_medrxiv",
-    }
-    tool_name = tool_map.get(source)
-    if not tool_name:
-        return {"error": f"Unknown download source: {source}", "valid_sources": list(tool_map.keys())}
-    return client.call_tool(tool_name, {"paper_id": paper_id})
+    if params.get("doi"):
+        return client.call_tool("download_pdf", {"doi": params["doi"], "source": params.get("source", "arxiv")})
+    if params.get("url"):
+        return client.call_tool("download_pdf", {"url": params["url"], "source": params.get("source", "arxiv")})
+    return {"error": "download requires 'doi' or 'url'"}
