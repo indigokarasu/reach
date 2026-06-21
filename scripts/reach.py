@@ -15,14 +15,24 @@ from {agent_root}/commons/data/ocas-reach/usage.jsonl.
 import json
 import os
 import sys
+import time
 import urllib.parse
 import urllib.request
 import urllib.error
 import importlib
 import re
+from datetime import datetime, timezone
+from pathlib import Path
 from _load_yaml import _load_yaml_min
 
-
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+SCRIPT_DIR = Path(__file__).resolve().parent
+REGISTRY = SCRIPT_DIR / "sources.yml"
+USAGE_LOG = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/data/ocas-reach/usage.jsonl"
+DATA_DIR = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/data/ocas-reach"
+JOURNAL_DIR = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/journals/ocas-reach"
 
 # ---------------------------------------------------------------------------
 # Registry access
