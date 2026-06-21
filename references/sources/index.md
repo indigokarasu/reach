@@ -87,9 +87,10 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | `reddit` | media | [reddit.md](reddit.md) | optional | optional | Reddit browser via MCP. Anonymous (10/min) or OAuth (60-100/min). |
 | `linkedin` | media | [linkedin.md](linkedin.md) | required | required | LinkedIn profiles, companies, jobs via browser automation. Requires login. |
 | `paper_search` | science | [paper_search.md](paper_search.md) | optional | null | Multi-source academic paper search (arXiv, PubMed, Semantic Scholar, etc.). |
-| `searxng` | media | [searxng.md](searxng.md) | none | null | Local SearXNG metasearch. Open web + social media search. No key needed. |
-| `yahoo_finance` | finance | [yahoo_finance.md](yahoo_finance.md) | none | null | Yahoo Finance MCP. Prices, financials, news, recommendations, options. No key. |
-| `acre_lens` | geo | [acre-lens.md](acre-lens.md) | none | null | AcreLens MCP. US land due-diligence: solar, groundwater, flood zones, building codes, county regulations. No key. |
+|| `searxng` | media | [searxng.md](searxng.md) | none | null | Local SearXNG metasearch. Open web + social media search. No key needed. ||
+|| `yahoo_finance` | finance | [yahoo_finance.md](yahoo_finance.md) | none | null | Yahoo Finance MCP. Prices, financials, news, recommendations, options. No key. ||
+|| `rapidapi` | other | [rapidapi.md](rapidapi.md) | rapidapi_key | varies | 203+ APIs via MCP multiplexer. Finance, crypto, news, geo, weather, security, social, travel. General-purpose marketplace — NOT "local business search." ||
+|| `acre_lens` | geo | [acre-lens.md](acre-lens.md) | none | null | AcreLens MCP. US land due-diligence: solar, groundwater, flood zones, building codes, county regulations. No key. ||
 
 ---
 
