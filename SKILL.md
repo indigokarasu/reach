@@ -89,6 +89,12 @@ See `references/source-evaluation-framework.md` for the evaluation checklist and
 
 `katzilla` and `property_lookup` predate the v3 registry. References: `references/katzilla.md`, `references/property_lookup.md`.
 
+## Methodology Notes
+
+**Reach/Sift boundary (Jun 12, 2026)** — Reach owns: sources.yml, API connectors, MCP connections, quota tracking (CSAPI + all Reach-registered APIs), discovered APIs catalog (`references/discovered-apis.md`). Sift owns: research synthesis, web_search, entity extraction. NEVER manages own MCP/quota. Sift delegates to Reach for factual anchors via `reach.csapi_check/increment` and `reach.query rapidapi`.
+
+**RapidAPI is general-purpose marketplace (Jun 12, 2026)** — 203 endpoints (finance, crypto, news, geo, weather, security, social, travel). NOT "local business search." Route via `reach.query rapidapi`. When one skill uses a narrow slice of a tool, don't let that define the tool for all skills. Always check canonical source/definition of a multi-skill shared tool.
+
 ## Support File Map
 
 | File | When to read |
@@ -100,6 +106,7 @@ See `references/source-evaluation-framework.md` for the evaluation checklist and
 | `references/source-evaluation-framework.md` | Before adding a new source to the registry; when evaluating candidate APIs |
 | `references/storage-layout.md` | When inspecting or configuring the on-disk data and journal directories |
 | `references/okrs.md` | When reviewing OKR definitions or scoring skill performance |
+| `references/api-mine-cron-notes.md` | When debugging api-mine cron behavior; when "0 new APIs" result needs interpretation |
 
 ## Recovery Behavior
 
@@ -125,8 +132,30 @@ Journal payload includes: `source`, `action`, `params`, `outcome` (`success` / `
 | Job | Mechanism | Schedule | Command |
 |---|---|---|---|
 | `reach:update` | cron | `0 0 * * *` | Self-update from GitHub source |
+| `reach:api-mine` | cron | `0 4 * * *` | Scan sessions for sites with APIs → `references/discovered-apis.md` |
+
+## Source Discovery (reach:api-mine)
+
+The `reach:api-mine` cron job scans **all** session transcripts (not just research) for sites, services, databases, and archives that are used or needed by any skill. For each site found, it evaluates:
+
+1. **Does it have an API?** — Check for programmatic access (REST, GraphQL, etc.)
+2. **Can I access it?** — Free/freemium/paid? API key required? Account signup possible?
+3. **What data does it provide?** — What endpoints exist? What can you search/retrieve?
+4. **Does it belong as a preferred source?** — Is the API meaningfully better than the current access method (web scraping, SearXNG, browser) for the skill that found it?
+
+A site is only cataloged if it has a **confirmed working API**, the data is useful to an active skill/workflow, and the API is better than the current approach. Deduplicate against both `sources.yml` and `references/discovered-apis.md`.
+
+Catalog: `references/discovered-apis.md` — fully evaluated candidates ready for integration into `sources.yml`.
+
+**Key principle:** Not a general search index. Only sites that specific skills already use or need, where an API would reduce friction vs. the current method.
 
 `reach.init` registers `reach:update` on first invocation. No operational background tasks beyond self-update — Reach is purely reactive to user/agent queries.
+
+**Session-retention limitation (Jun 18, 2026)** — The session database (via `session_search`) only retains recent sessions (typically 48-72h of FTS5-indexed content). Older research sessions — even those with significant API discoveries — become unsearchable once they age out. This means:
+- The api-mine cron can only discover APIs from sessions that are still in the active session store
+- If a session produced API discoveries but was compacted/aged out before the cron ran, those discoveries are lost
+- **Mitigation**: When a session produces an API discovery, immediately write it to `references/discovered-apis.md` (don't rely on the cron to catch it later)
+- A "0 new APIs" result from the cron is NORMAL and expected when sessions are current — it means the catalog is up-to-date, not that the cron is broken
 
 ## Self-Update
 
