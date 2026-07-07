@@ -67,6 +67,7 @@ _Lookup by what data you need. Cross-references the main source index._
 |------|-------------|--------------|-------|
 | General web search | SearXNG (main index) | Google CSAPI | CSAPI: programmatic Google search |
 | API discovery | RapidAPI marketplace | `public_apis` (main index) | 203 endpoints across all categories |
+| Product manuals | `manualslib` (main index) | ManualZZ (mirror) | 3M+ manuals, 140K+ brands. Vue.js SPA, direct access blocked. Wayback CDX + image OCR. |
 
 ### Banking & Transactions
 | Data | Best Source | Alternatives | Notes |
@@ -301,4 +302,17 @@ _Force-ranked within each data type. Only populated when 2+ discovered APIs comp
 
 _Newest additions go here first. When fully categorized and indexed, move to Registry._
 
-_All discovered APIs have been moved to the Registry above. This section will populate with new discoveries from future cron runs._
+### Satellite & Earth Observation
+
+#### NASA GIBS (Global Imagery Browse Services)
+- **Endpoint**: `https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/` (WMTS REST/KVP); also WMS, TWMS, XYZ/TMS
+- **Data**: ~180+ satellite imagery layers — MODIS, VIIRS, Landsat, Sentinel-2 (best available), MERRA-2 climate reanalysis, GEDI biomass, sea surface temperature, fire detection, aerosols, vegetation indices, and more. Global coverage, daily cadence for many layers, some near-real-time. Time dimension: YYYY-MM-DD per tile, with date ranges per layer (some back to 1980).
+- **Auth**: None required
+- **Rate limits**: No documented hard cap; be reasonable
+- **Quality**: Authoritative NASA source. WMTS standard (OGC). Tiles are pre-rendered PNG at fixed zoom levels (250m to 16km). GetCapabilities XML lists all layers with identifiers, date ranges, projections, tile matrix sets. Massive GetCapabilities response (~5MB).
+- **Discovered**: 2026-06-24 (evaluating Earth View github.com/colincode0/earth-view as source reference)
+- **Notes**: Different from existing `nasa` source (which covers api.nasa.gov query APIs like APOD/NEO/EONET). GIBS is a tile imagery service — complementary, not overlapping. The `nasa` source's `eonet` action covers natural events; GIBS covers the underlying imagery. Earth View (colincode0/earth-view) uses GIBS as its primary globe renderer. Also used by VEDA, OpenStreetMap, and many scientific visualization tools.
+- **Integration plan**: Add as `gibs` source with actions: `get_capabilities` (parse layer list from WMTS GetCapabilities XML), `get_tile` (construct tile URL from layer/zoom/row/col/date params), `list_layers` (filtered search across capabilities). Custom connector needed because WMTS is not a simple REST query pattern.
+- **Source session**: current
+
+_All other discovered APIs have been moved to the Registry above. This section will populate with new discoveries from future cron runs._

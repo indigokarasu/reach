@@ -60,6 +60,8 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | `exchangerate` | finance | [exchangerate.md](exchangerate.md) | none | currency exchange rates, no key needed |
 | `transit_land` | geo | [transit_land.md](transit_land.md) | none | transit routes, stops, schedules worldwide |
 | `ev_charging` | geo | [ev_charging.md](ev_charging.md) | none | EV charging station locations worldwide |
+| `manualslib` | knowledge | [manualslib.md](manualslib.md) | none | 3M+ product manuals, 140K+ brands. Vue.js SPA, direct access blocked. Wayback CDX + image OCR. |
+| `gibs` | science | [gibs.md](gibs.md) | none | NASA satellite imagery tiles (MODIS, VIIRS, ~180+ layers). WMTS + WMS. No key. |
 
 ## Needs key or login (free tier)
 
@@ -128,6 +130,7 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | "Country facts" | `rest_countries` (basics) or `world_bank` (indicators) |
 | "Book / ISBN" | `open_library` |
 | "NASA / asteroid / rover photo / disaster" | `nasa` |
+| "Satellite imagery layers" / "Earth observation data" | `gibs` (planned -- see discovered-apis.md) |
 | "Solar flare / geomagnetic storm / ISS location" | `space_weather` |
 | "US demographics / population / income by area" | `census` |
 | "Environmental compliance / facility violations" | `epa_echo` |
@@ -137,8 +140,11 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | "US air quality index (official EPA)" | `airnow` |
 | "Currency exchange rates / convert currency" | `exchangerate` |
 | "Transit routes / stops / schedules" | `transit_land` |
-|| "EV charging stations near X" | `ev_charging` |
-|| "Analyze this land" / "tell me about this property" | `acre_lens analyze_land` |
+| "EV charging stations near X" | `ev_charging` |
+| "Product manual for X" / "How to use X" / "X user manual" | `manualslib` search → read_page |
+| "Random manual page" | `manualslib` read_random |
+| "Satellite imagery of X" / "What does X look like from space" / "Recent imagery of location" | `gibs` layers → tile_url or wms_bbox |
+| "Analyze this land"
 || "Solar potential for this address" | `acre_lens get_solar_potential` |
 || "Compare these two parcels" / "which property is better" | `acre_lens compare_properties` |
 || "How suitable is this land" / "quick land score" | `acre_lens get_land_quick_score` |

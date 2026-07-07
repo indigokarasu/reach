@@ -29,10 +29,13 @@ from _load_yaml import _load_yaml_min
 # Constants
 # ---------------------------------------------------------------------------
 SCRIPT_DIR = Path(__file__).resolve().parent
+SKILL_DIR = SCRIPT_DIR.parent.parent
 REGISTRY = SCRIPT_DIR / "sources.yml"
 USAGE_LOG = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/data/ocas-reach/usage.jsonl"
 DATA_DIR = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/data/ocas-reach"
 JOURNAL_DIR = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/journals/ocas-reach"
+
+USER_AGENT = "ocas-reach (contact: mx.indigo.karasu@gmail.com)"
 
 # ---------------------------------------------------------------------------
 # Registry access

@@ -1,14 +1,14 @@
 ---
 name: ocas-reach
-description: 'Live world-data query engine. Queries real-time external APIs for factual ground truth — no synthesis, no opinion, no research. Routes requests through a registry of ~53 registered sources covering US government data, scholarly literature, weather and hazards, geocoding, finance and macro indicators, court records, nutrition, news events, property records, land due-diligence, and academic papers. Do not use for web research (use Sift), entity investigations (use Scout), or pattern analysis over historical signals (use Corvus).'
 license: MIT
+description: 'Live world-data query engine. Queries real-time external APIs for factual ground truth — no synthesis, no opinion, no research. Routes requests through a registry of ~55 registered sources covering US government data, scholarly literature, weather and hazards, geocoding, finance and macro indicators, court records, nutrition, news events, property records, land due-diligence, academic papers, satellite imagery, and product manuals (3M+). Do not use for web research (use Sift), entity investigations (use Scout), or pattern analysis over historical signals.'
 source: https://github.com/indigokarasu/reach
 includes:
 - references/**
 - scripts/**
 metadata:
   author: Indigo Karasu (indigokarasu)
-  version: 3.9.0
+  version: 3.11.1
 tags:
 - live-data
 - API
@@ -34,11 +34,13 @@ Reach is the system's **sensory layer** for verified ground truth. It answers "w
 - The agent needs a citation-bearing fact to ground a downstream response
 - The request is a specific entity, measurement, or list, not an open-ended exploration
 
+For example, when the user asks "any recent FDA recalls of peanut butter," Reach queries the FDA API and returns the verbatim recall list with citations.
+
 ## When NOT to Use
 
 - Open-ended research over many sources → use Sift
 - Investigating a person → use Scout
-- Detecting patterns in historical signals → use Corvus
+- Detecting patterns in historical signals — query Chronicle directly
 - Requests requiring summarization or synthesis (Reach returns the fact; the agent or another skill does the writing)
 
 ## Responsibility Boundary
@@ -48,8 +50,8 @@ Reach owns: real-time external API calls, source-specific connector logic, sourc
 Reach does not own:
 - Web research over open content (Sift)
 - Person investigations (Scout)
-- Knowledge graph queries (Elephas)
-- Pattern analysis over journals (Corvus)
+- Knowledge graph queries
+- Pattern analysis over journals
 - Long-form synthesis or briefing (Vesper)
 - Inbox / messaging (Dispatch)
 
@@ -67,7 +69,7 @@ Reach functions normally when none of these are present.
 
 ## Source Registry
 
-The authoritative source list lives in `scripts/sources.yml` (52 sources). Browsable index: `references/sources/index.md`. See `references/credential-files.md` for credential storage, `references/account_provisioning.md` for account registration.
+The authoritative source list lives in `scripts/sources.yml` (54 sources). Browsable index: `references/sources/index.md`. See `references/credential-files.md` for credential storage, `references/account_provisioning.md` for account registration.
 
 ## Account Creation
 
@@ -156,6 +158,7 @@ Catalog: `references/discovered-apis.md` — fully evaluated candidates ready fo
 - If a session produced API discoveries but was compacted/aged out before the cron ran, those discoveries are lost
 - **Mitigation**: When a session produces an API discovery, immediately write it to `references/discovered-apis.md` (don't rely on the cron to catch it later)
 - A "0 new APIs" result from the cron is NORMAL and expected when sessions are current — it means the catalog is up-to-date, not that the cron is broken
+- **Cron-skew (Jun 27, 2026)**: During periods when the agent runs primarily as cron jobs, there may be zero interactive sessions to mine. `[SILENT]` is correct — see `references/api-mine-cron-notes.md` § Cron-Skew.
 
 ## Self-Update
 
