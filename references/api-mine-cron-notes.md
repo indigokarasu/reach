@@ -39,8 +39,22 @@ The `discovered-apis.md` catalog covers:
 - Creative (Pollinations.ai)
 - Web Search (Google CSAPI, RapidAPI)
 - Archives (Chronicling America, Google Books, OpenLibrary)
+- Models & ML (Hugging Face Hub)
 
-Plus 53 sources in `sources.yml`. Coverage is broad. New discoveries will be increasingly rare.
+Plus 60 sources in `sources.yml`. Coverage is broad. New discoveries will be increasingly rare.
+
+## Cron-Skew: Periods Without Interactive Sessions
+
+When the agent is running primarily or exclusively as cron jobs (health monitors, dispatchers, updaters), there may be **zero interactive sessions** (telegram/web) in the mining window. During these periods:
+
+- The cron will always return `[SILENT]` — this is **correct behavior**
+- No new APIs will be discovered because cron sessions don't contain user-facing data source usage
+- The catalog remains static — also correct
+- Discovery resumes naturally when interactive sessions occur again
+
+**Do not** treat a `[SILENT]` result during high-cron periods as a problem. The cron is working; there's simply nothing to mine.
+
+**Confirmed pattern (Jun 27, 2026):** A 7-day window contained 50+ cron sessions and 0 interactive sessions. The cron correctly returned `[SILENT]`. No action needed.
 
 ## Operational Checklist
 
