@@ -1740,3 +1740,43 @@ sources:
         description: "Solar energy estimate via NREL PVWatts. params: {address?, lat?, lng?, system_size_kw?}. Read-only."
       get_state_land_profile:
         description: "State-level land intelligence (regulation, climate, solar, water, building codes). params: {state_code, mode?}. Read-only."
+
+  # ============================================================
+  # MANUALS + DOCUMENTATION
+  # ============================================================
+  gibs:
+    category: science
+    reference: gibs.md
+    auth: none
+    account: null
+    custom: gibs
+    base_url: https://gibs.earthdata.nasa.gov/wmts/epsg4326/best
+    rate: no documented cap; be polite to shared NASA infrastructure
+    actions:
+      layers:
+        description: "List available imagery layers (MODIS, VIIRS, etc.). params: {category: 'modis', instrument: 'viirs', search: 'true color', limit: 50, offset: 0}"
+      capabilities:
+        description: "Full parsed WMTS capabilities. params: {raw: false} for JSON, {raw: true} for XML string"
+      tile_url:
+        description: "Build a WMTS tile URL. params: {layer: '<id>', date: 'YYYY-MM-DD', tile_matrix_set: '2km', level: N, row: N, col: N, format: 'png'}"
+      wms_bbox:
+        description: "Build a WMS GetMap URL for a bbox. params: {layer: '<id>', date: 'YYYY-MM-DD', bbox: 'west,south,east,north', width: 512, height: 512}"
+      projections:
+        description: "List available map projections"
+
+  manualslib:
+    category: knowledge
+    reference: manualslib.md
+    auth: none
+    account: null
+    custom: manualslib
+    rate: no published cap; throttle to <5/sec for Wayback CDX
+    actions:
+      autocomplete:
+        description: "OpenSearch autocomplete — search suggestions from the site's index. params: {query: 'canon camera'}"
+      search:
+        description: "Find manuals via web_search + Wayback Wayback CDX URL enumeration. params: {query: 'canon f-730sx', limit: 5}"
+      read_page:
+        description: "Download and OCR a specific page from a manual. params: {manual_id: '1428710', page: 3, slug: 'f730sx'}"
+      read_random:
+        description: "Read a random page from a random manual. params: {}"
