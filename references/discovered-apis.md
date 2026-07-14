@@ -51,10 +51,25 @@ _Lookup by what data you need. Cross-references the main source index._
 | Book metadata & search | Google Books API | OpenLibrary API | Both free; Google has better snippet previews |
 | Book metadata (open) | OpenLibrary API | Google Books API | Internet Archive project, fully open data |
 
+### Standards & RFC
+| Data | Best Source | Alternatives | Notes |
+|------|-------------|--------------|-------|
+| Internet standards / RFCs | IETF Datatracker API | — | 157K+ documents, drafts, groups, meetings; no auth |
+| IETF working groups | IETF Datatracker API | — | WG charters, chairs, milestones |
+| IETF meetings / agendas | IETF Datatracker API | — | Meeting materials, proceedings |
+
 ### Creative & Media
 | Data | Best Source | Alternatives | Notes |
 |------|-------------|--------------|-------|
 | Image generation | Pollinations.ai | — | Used by ocas-imagine |
+
+### Museums & Cultural Heritage
+| Data | Best Source | Alternatives | Notes |
+|------|-------------|--------------|-------|
+| Museum open-data source discovery | Digital Art History Directory — Open Data Collections | `public_apis`, web search | Curated list of art/museum open datasets and APIs; WordPress JSON accessible |
+| Metropolitan Museum of Art collections | The Met Collection API | Met Open Access CSV | 470k+ object records + public-domain images; no auth; CC0 dataset |
+| Harvard Art Museums collections | Harvard Art Museums API | IIIF manifests | Object/person/exhibition/publication/gallery metadata + images; key required; non-commercial |
+| Walters Art Museum collections | Walters static collections data | Online Collection / future API v2 | 10k+ object records + media CSVs; v1 API closed; CC0; static GitHub data now |
 
 ### Models & ML
 | Data | Best Source | Alternatives | Notes |
@@ -181,6 +196,73 @@ _Full details per API. Organized by category. Quality-ranked within each categor
 - **Notes**: Free tier is sufficient for most use cases. Image quality comparable to basic Stable Diffusion. No account required.
 - **Source session**: `20260605_235610_02d858`
 
+### Museums & Cultural Heritage
+
+#### Digital Art History Directory — Open Data Collections
+- **Endpoint**: `https://dahd.hcommons.org/open-data-collections/`
+- **Machine-readable endpoint**: `https://dahd.hcommons.org/wp-json/wp/v2/pages?slug=open-data-collections`
+- **Data**: Curated directory of open digital art history / museum collection datasets and APIs. Entries currently include Artsy Art Genome Project, Art Institute of Chicago API, Biodiversity Heritage Library, Carnegie Museum of Art dataset, Cleveland Museum of Art Open Access API, Getty Vocabularies LOD, Harvard Art Museums API, Library of Congress Prints & Photographs API, Smithsonian American Art Museum LOD/SPARQL, Met Collection API + CSV, MoMA datasets, National Gallery of Art open data, Nationalmuseum Sweden Wikidata collection, Cooper Hewitt open data/API, Tate dataset, Wikidata Sum of All Paintings, Yale Center for British Art IIIF resources.
+- **Auth**: None for the WordPress JSON endpoint.
+- **Rate limits**: Not documented; treat as low-volume source-discovery endpoint.
+- **Quality**: Curated domain-specific source directory from the Digital Art History Directory / Art Libraries Society of North America context. Useful for discovering candidate Reach sources, not for answering object-level factual queries directly.
+- **Cost/terms**: Open web page; individual linked datasets have their own licenses/terms.
+- **Discovered**: 2026-07-11 (Jared suggested DAHD Open Data Collections as an ocas-reach source)
+- **Verified**: Browser-like page request redirects through HCommons silent login with HTTP 202, but WordPress REST API returns the published page JSON without login. Extracted 26 links from the page content.
+- **Notes**: Register, if integrated, as a `source_directory` / discovery source rather than a primary factual source. Initial Reach actions should be `list_sources` (parse page content into name, URL, description), `get_source` by normalized name, and maybe `refresh_catalog`. Deduplicate against `sources.yml` and this discovered catalog before adding linked APIs. Do not treat directory summaries as authoritative for the linked API's current terms; verify each linked source directly before integration.
+- **Source session**: current
+
+#### The Metropolitan Museum of Art Collection API
+- **Endpoint**: `https://collectionapi.metmuseum.org/public/collection/v1`
+- **Docs**: `https://metmuseum.github.io/`; GitHub/Open Access page: `https://github.com/metmuseum/openaccess`
+- **Data**: Open Access metadata for 470,000+ artworks in The Met collection plus high-resolution public-domain JPEGs where available. Endpoints cover all object IDs, single object records, departments, and search. Object records include accession data, public-domain/image flags and URLs, constituents/artist metadata, department, title, culture/period/dynasty, dates, medium, dimensions/measurements, credit line, geography fields, classification, rights, metadata date, repository, object URL, tags with AAT/Wikidata links, object Wikidata URL, Timeline flag, and gallery number.
+- **Auth**: None. No API key or registration required.
+- **Rate limits**: 80 requests/second. No documented daily/monthly cap.
+- **Quality**: Primary source maintained by The Metropolitan Museum of Art; REST JSON API; unrestricted Open Access dataset; direct public-domain image URLs. Stronger immediate Reach candidate than Harvard because no key is needed and commercial/noncommercial use is allowed under CC0 where applicable.
+- **Cost/terms**: Free. The Met states it has waived copyright/neighboring rights to the selected dataset using Creative Commons Zero to the extent possible under law; API use remains subject to The Met terms and conditions. Images returned are high-resolution public-domain JPEGs when available.
+- **Discovered**: 2026-07-11 (Jared suggested docs as an ocas-reach source)
+- **Verified**: Live API calls succeeded for `/departments`, `/search?q=sunflowers&hasImages=true`, and `/objects/436524`.
+- **Notes**: Initial Reach actions should be `list_objects` (with `metadataDate` and `departmentIds` filters), `get_object`, `departments`, and `search_objects` with supported search filters (`q`, `isHighlight`, `title`, `tags`, `departmentId`, `isOnView`, `artistOrCulture`, `medium`, `hasImages`, `geoLocation`, `dateBegin`, `dateEnd`). Citation should prefer `objectURL` for object records and docs URL for aggregate endpoints. Because search returns object IDs only, a higher-level helper may optionally fetch first N object details after search, but should preserve raw IDs/result counts.
+- **Source session**: current
+
+#### Harvard Art Museums API
+- **Endpoint**: `https://api.harvardartmuseums.org`
+- **Docs**: `https://github.com/harvardartmuseums/api-docs`
+- **Data**: Harvard Art Museums collections metadata and media: objects, people, exhibitions, publications, galleries, classifications, centuries, colors, cultures, groups, media/technique/support/worktype vocabularies, places, activities, sites, video, image, audio, annotations. Object records include provenance, credit line, dates, culture/classification/medium, people, publications, exhibitions, gallery, colors, images, and IIIF links.
+- **Auth**: API key required via Google Form request. Key passed as `apikey` query parameter.
+- **Rate limits**: 2,500 requests/day. Default page size 10; max `size=100`.
+- **Quality**: Primary source maintained by Harvard Art Museums; data powers the public museum website; refreshed daily around 6am. JSON REST API plus IIIF Image/Presentation services. Strong fit for factual cultural-heritage lookups and collection/image/provenance queries.
+- **Cost/terms**: Free, non-commercial only. Do not cache/store content for more than two weeks without written permission. Must identify/link Harvard Art Museums content; use returned image URLs rather than local copies; logo/name hostname restrictions.
+- **Discovered**: 2026-07-11 (Jared suggested GitHub API docs as an ocas-reach source)
+- **Notes**: Better than scraping the collection website. Initial Reach actions should likely be `search_objects`, `get_object`, `search_people`, `get_person`, `search_exhibitions`, `get_exhibition`, `search_publications`, `get_publication`, `list_vocab`/resource passthrough, and `iiif_manifest`. Generic resource passthrough may cover the long tail, but object/person/exhibition deserve typed helpers. Citation should include `url` field for object/person records and docs URL otherwise. Requires account provisioning before full integration/testing.
+- **Source session**: current
+
+#### Walters Art Museum Collections Data
+- **Endpoint**: `https://github.com/WaltersArtMuseum/api-thewalters-org` (static CSV data files); API homepage `https://api.thewalters.org/`
+- **Docs**: GitHub wiki linked from repository: objects, images/media, collections, geographies, exhibitions.
+- **Data**: Static data files for the Walters Art Museum collections. `art.csv` contains 10,000+ digital object records with fields including object ID/number/name, date begin/end/text, title, dimensions, medium, style, culture, inscriptions, classification, period, canonical resource URL, description, credit line, keywords, provenance, dynasty/reign, geography ID, related objects, image filenames, collection IDs, museum location note, creators, and exhibitions. Related CSVs cover media/images, relationships between objects, collections/categories, geographies, and exhibitions.
+- **Auth**: None for GitHub/static files.
+- **Rate limits**: GitHub raw/API rate limits apply; no museum API rate limit currently relevant because live v1 API closed in 2023.
+- **Quality**: Primary institutional collection data from Walters Art Museum; CC0 and commercial reuse allowed. Good for offline/static factual lookups over Walters collection records and media, but not a live API until v2 comes online.
+- **Cost/terms**: Free; repository README states data and images are CC0 for reuse, including commercial purposes. Verify image URL construction/media terms from `media.csv`/wiki before exposing image URLs.
+- **Discovered**: 2026-07-11 (Jared suggested GitHub repo as an ocas-reach source)
+- **Verified**: Repository is active/unarchived; README states v1 closed in 2023 and static data files are available until v2. `art.csv` was readable via GitHub API and contains object records with canonical `https://purl.thewalters.org/art/...` citation URLs.
+- **Notes**: Register, if integrated, as a static dataset/custom connector rather than a REST API. Initial Reach actions should be `search_objects` (CSV scan/filter), `get_object` by ObjectID/ObjectNumber, `list_collections`, `list_exhibitions`, `get_media` by ObjectID/ObjectNumber, and possibly `download_snapshot`/`refresh_snapshot`. Citation should use `ResourceURL` for object records and repository/docs URL for aggregate queries. Lower immediate priority than The Met for live REST behavior, but valuable because it is CC0 and adds Baltimore/Walters coverage.
+- **Source session**: current
+
+### Standards & RFC
+
+#### IETF Datatracker API
+- **Endpoint**: `https://datatracker.ietf.org/api/v1`
+- **Data**: Machine-readable metadata for IETF/IRTF standards documents — RFCs, Internet-Drafts, working-group charters, groups, persons, meetings, IPR disclosures, liaisons, and more. The `/doc/document/` endpoint alone indexes 157,549 records (drafts, RFCs, reviews, slides). Resource list (from API root): community, dbtemplate, doc, group, iesg, ipr, liaisons, mailinglists, mailtrigger, meeting, message, name, nomcom, person.
+- **Auth**: None required for read access (anonymous GET returns 200).
+- **Rate limits**: Not published; throttle conservatively (Datatracker is a shared community resource — <2/sec recommended).
+- **Quality**: Primary source maintained by the IETF Secretariat. REST JSON (Tastypie-style: `?format=json`, `?limit=`, `?offset=`, filter params per resource). Each record carries a `resource_uri` and grouped `meta` block (total_count, next, previous). Strong structured alternative to scraping Datatracker HTML pages.
+- **Cost/terms**: Free, open. IETF community content; attribute appropriately.
+- **Discovered**: 2026-07-14 (reach:api-mine — surfaced from interactive sessions referencing `datatracker.ietf.org` during dashboard/MCP-cookie work)
+- **Verified**: Live API calls confirmed: `/api/v1/?format=json` (resource list, 200), `/api/v1/doc/document/?limit=1&format=json` (200, total_count 157549), `/api/v1/group/group/?limit=1&format=json` (200), `/api/v1/person/person/?limit=1&format=json` (200), `/api/v1/meeting/meeting/?limit=1&format=json` (200). Anonymous requests succeed without auth. (`/doc/docalias/` 404'd — use `/doc/document/` and filter by `name` for RFC lookup.)
+- **Notes**: Initial Reach actions should be `list_resources` (API root), `get_document` (by name, e.g. `rfc9000`), `search_documents`, `get_group`, `get_person`, `get_meeting`. Deduplicate against `sources.yml` and this catalog before integration — not currently present. Better than scraping Datatracker HTML for RFC/WG/meeting metadata. Potential consumer skills: ocas-sift (technical research), ocas-reach (standards fact lookup), ocas-scout.
+- **Source session**: `20260713_001806_387698` (and related dashboard-cookie sessions)
+
 ### Web Search
 
 #### Google Custom Search API (CSAPI)
@@ -287,6 +369,13 @@ _Force-ranked within each data type. Only populated when 2+ discovered APIs comp
 | Rank | API | Why |
 |------|-----|-----|
 | 1 | Pollinations.ai | Free, no key required, good quality for concept art |
+
+### Museums & Cultural Heritage
+
+| Rank | API | Why |
+|------|-----|-----|
+| 1 | The Met Collection API | Primary museum source, 470k+ objects, no auth, 80 req/sec, CC0/Open Access, direct public-domain image URLs |
+| 2 | Harvard Art Museums API | Richer/more varied museum metadata and IIIF support, but requires key and is non-commercial with stricter caching/attribution terms |
 
 ### Archives & Newspapers
 
