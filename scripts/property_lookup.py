@@ -19,6 +19,12 @@ import urllib.parse
 import urllib.request
 import urllib.error
 
+_HELP_ARGS = {"--help", "-h"}
+if set(sys.argv[1:]) & _HELP_ARGS:
+    print((__doc__ or "").strip() or "Usage: python3 property_lookup.py")
+    sys.exit(0)
+
+
 REDFIN_BASE = "https://redfin.realtyapi.io"
 ZILLOW_BASE = "https://zillow.realtyapi.io"
 SF_OPENDATA = "https://data.sfgov.org/resource/wv5m-vpq2.json"
