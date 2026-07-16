@@ -22,6 +22,12 @@ import json
 import urllib.request
 import urllib.error
 
+_HELP_ARGS = {"--help", "-h"}
+if set(sys.argv[1:]) & _HELP_ARGS:
+    print((__doc__ or "").strip() or "Usage: python3 katzilla.py")
+    sys.exit(0)
+
+
 API_BASE = "https://api.katzilla.dev"
 KZ_KEY = os.environ.get("KZ_KEY", "")
 

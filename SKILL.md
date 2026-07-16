@@ -9,6 +9,14 @@ includes:
 metadata:
   author: Indigo Karasu (indigokarasu)
   version: 3.11.1
+  hermes:
+    category: data-science
+    tags:
+    - live-data
+    - api
+    - real-time
+    - facts
+    - OCAS-core
 tags:
 - live-data
 - API
@@ -140,10 +148,10 @@ Journal payload includes: `source`, `action`, `params`, `outcome` (`success` / `
 
 The `reach:api-mine` cron job scans **all** session transcripts (not just research) for sites, services, databases, and archives that are used or needed by any skill. For each site found, it evaluates:
 
-1. **Does it have an API?** — Check for programmatic access (REST, GraphQL, etc.)
-2. **Can I access it?** — Free/freemium/paid? API key required? Account signup possible?
-3. **What data does it provide?** — What endpoints exist? What can you search/retrieve?
-4. **Does it belong as a preferred source?** — Is the API meaningfully better than the current access method (web scraping, SearXNG, browser) for the skill that found it?
+- [ ] **Does it have an API?** — Check for programmatic access (REST, GraphQL, etc.)
+- [ ] **Can I access it?** — Free/freemium/paid? API key required? Account signup possible?
+- [ ] **What data does it provide?** — What endpoints exist? What can you search/retrieve?
+- [ ] **Does it belong as a preferred source?** — Is the API meaningfully better than the current access method (web scraping, SearXNG, browser) for the skill that found it?
 
 A site is only cataloged if it has a **confirmed working API**, the data is useful to an active skill/workflow, and the API is better than the current approach. Deduplicate against both `sources.yml` and `references/discovered-apis.md`.
 
