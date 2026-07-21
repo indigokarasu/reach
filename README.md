@@ -1,7 +1,7 @@
 # reach
 
 <p align="center">
-<img src="./assets/readme/hero.svg" width="100%" alt="Reach: real-time world-data query engine — stock prices, weather, news, and live data on demand.">
+<img src="./assets/readme/hero.jpg" width="100%" alt="Reach: real-time world-data query engine — stock prices, weather, news, and live data on demand.">
 </p>
 
 reach — Reach: real-time world-data query engine — stock prices, weather, news, and live data on demand.
