@@ -4,7 +4,7 @@ MCP multiplexer that provides access to 203+ RapidAPI-hosted APIs through a sing
 
 ## Endpoint
 
-`rapidapi` (MCP stdio server at `<hermes-root>/scripts/rapidapi-mcp-server.py`)
+`rapidapi` (MCP stdio server at `<hermes-home>/scripts/rapidapi-mcp-server.py`)
 
 ## Auth
 

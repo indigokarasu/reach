@@ -15,7 +15,7 @@ Use NWS for: authoritative US forecasts, severe-weather alerts (tornado, flash f
 | Required | none |
 | Account | not needed |
 
-NWS requires every request carry a `User-Agent` identifying the caller with a contact. Reach sends `ocas-reach (mx.indigo.karasu@gmail.com)` automatically.
+NWS requires every request carry a `User-Agent` identifying the caller with a contact. Reach sends `ocas-reach (<third-party-or-user-email>)` automatically.
 
 ## Limits
 

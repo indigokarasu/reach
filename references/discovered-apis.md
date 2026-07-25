@@ -206,7 +206,7 @@ _Full details per API. Organized by category. Quality-ranked within each categor
 - **Rate limits**: Not documented; treat as low-volume source-discovery endpoint.
 - **Quality**: Curated domain-specific source directory from the Digital Art History Directory / Art Libraries Society of North America context. Useful for discovering candidate Reach sources, not for answering object-level factual queries directly.
 - **Cost/terms**: Open web page; individual linked datasets have their own licenses/terms.
-- **Discovered**: 2026-07-11 (owner suggested DAHD Open Data Collections as an ocas-reach source)
+- **Discovered**: 2026-07-11 (<operator> suggested DAHD Open Data Collections as an ocas-reach source)
 - **Verified**: Browser-like page request redirects through HCommons silent login with HTTP 202, but WordPress REST API returns the published page JSON without login. Extracted 26 links from the page content.
 - **Notes**: Register, if integrated, as a `source_directory` / discovery source rather than a primary factual source. Initial Reach actions should be `list_sources` (parse page content into name, URL, description), `get_source` by normalized name, and maybe `refresh_catalog`. Deduplicate against `sources.yml` and this discovered catalog before adding linked APIs. Do not treat directory summaries as authoritative for the linked API's current terms; verify each linked source directly before integration.
 - **Source session**: current
@@ -219,7 +219,7 @@ _Full details per API. Organized by category. Quality-ranked within each categor
 - **Rate limits**: 80 requests/second. No documented daily/monthly cap.
 - **Quality**: Primary source maintained by The Metropolitan Museum of Art; REST JSON API; unrestricted Open Access dataset; direct public-domain image URLs. Stronger immediate Reach candidate than Harvard because no key is needed and commercial/noncommercial use is allowed under CC0 where applicable.
 - **Cost/terms**: Free. The Met states it has waived copyright/neighboring rights to the selected dataset using Creative Commons Zero to the extent possible under law; API use remains subject to The Met terms and conditions. Images returned are high-resolution public-domain JPEGs when available.
-- **Discovered**: 2026-07-11 (owner suggested docs as an ocas-reach source)
+- **Discovered**: 2026-07-11 (<operator> suggested docs as an ocas-reach source)
 - **Verified**: Live API calls succeeded for `/departments`, `/search?q=sunflowers&hasImages=true`, and `/objects/436524`.
 - **Notes**: Initial Reach actions should be `list_objects` (with `metadataDate` and `departmentIds` filters), `get_object`, `departments`, and `search_objects` with supported search filters (`q`, `isHighlight`, `title`, `tags`, `departmentId`, `isOnView`, `artistOrCulture`, `medium`, `hasImages`, `geoLocation`, `dateBegin`, `dateEnd`). Citation should prefer `objectURL` for object records and docs URL for aggregate endpoints. Because search returns object IDs only, a higher-level helper may optionally fetch first N object details after search, but should preserve raw IDs/result counts.
 - **Source session**: current
@@ -232,7 +232,7 @@ _Full details per API. Organized by category. Quality-ranked within each categor
 - **Rate limits**: 2,500 requests/day. Default page size 10; max `size=100`.
 - **Quality**: Primary source maintained by Harvard Art Museums; data powers the public museum website; refreshed daily around 6am. JSON REST API plus IIIF Image/Presentation services. Strong fit for factual cultural-heritage lookups and collection/image/provenance queries.
 - **Cost/terms**: Free, non-commercial only. Do not cache/store content for more than two weeks without written permission. Must identify/link Harvard Art Museums content; use returned image URLs rather than local copies; logo/name hostname restrictions.
-- **Discovered**: 2026-07-11 (owner suggested GitHub API docs as an ocas-reach source)
+- **Discovered**: 2026-07-11 (<operator> suggested GitHub API docs as an ocas-reach source)
 - **Notes**: Better than scraping the collection website. Initial Reach actions should likely be `search_objects`, `get_object`, `search_people`, `get_person`, `search_exhibitions`, `get_exhibition`, `search_publications`, `get_publication`, `list_vocab`/resource passthrough, and `iiif_manifest`. Generic resource passthrough may cover the long tail, but object/person/exhibition deserve typed helpers. Citation should include `url` field for object/person records and docs URL otherwise. Requires account provisioning before full integration/testing.
 - **Source session**: current
 
@@ -244,7 +244,7 @@ _Full details per API. Organized by category. Quality-ranked within each categor
 - **Rate limits**: GitHub raw/API rate limits apply; no museum API rate limit currently relevant because live v1 API closed in 2023.
 - **Quality**: Primary institutional collection data from Walters Art Museum; CC0 and commercial reuse allowed. Good for offline/static factual lookups over Walters collection records and media, but not a live API until v2 comes online.
 - **Cost/terms**: Free; repository README states data and images are CC0 for reuse, including commercial purposes. Verify image URL construction/media terms from `media.csv`/wiki before exposing image URLs.
-- **Discovered**: 2026-07-11 (owner suggested GitHub repo as an ocas-reach source)
+- **Discovered**: 2026-07-11 (<operator> suggested GitHub repo as an ocas-reach source)
 - **Verified**: Repository is active/unarchived; README states v1 closed in 2023 and static data files are available until v2. `art.csv` was readable via GitHub API and contains object records with canonical `https://purl.thewalters.org/art/...` citation URLs.
 - **Notes**: Register, if integrated, as a static dataset/custom connector rather than a REST API. Initial Reach actions should be `search_objects` (CSV scan/filter), `get_object` by ObjectID/ObjectNumber, `list_collections`, `list_exhibitions`, `get_media` by ObjectID/ObjectNumber, and possibly `download_snapshot`/`refresh_snapshot`. Citation should use `ResourceURL` for object records and repository/docs URL for aggregate queries. Lower immediate priority than The Met for live REST behavior, but valuable because it is CC0 and adds Baltimore/Walters coverage.
 - **Source session**: current

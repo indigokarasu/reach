@@ -25,7 +25,7 @@ Use govinfo for: canonical text of laws/rules/bills, daily Congressional Record,
 | Account URL | https://api.govinfo.gov/docs/ |
 | Plan tier | free |
 
-Reach is authorized to register at the URL above using `mx.indigo.karasu@gmail.com`. See `references/account_provisioning.md`. Sign-up is via api.data.gov (a single key works across many federal APIs).
+Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`. Sign-up is via api.data.gov (a single key works across many federal APIs).
 
 ## Limits
 

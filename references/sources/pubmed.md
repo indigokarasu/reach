@@ -17,7 +17,7 @@ Use PubMed for: clinical evidence, biomedical literature search, drug/disease/ge
 | Account | optional |
 | Account URL | https://www.ncbi.nlm.nih.gov/account/ |
 
-If a key is desired, Reach is authorized to register at the URL above using `mx.indigo.karasu@gmail.com`. See `references/account_provisioning.md`. Anonymous access works fine for typical query loads.
+If a key is desired, Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`. Anonymous access works fine for typical query loads.
 
 ## Limits
 

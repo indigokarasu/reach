@@ -21,7 +21,7 @@ Reach is authorized to register APIs at sources where `account` is `required` or
 | Field | Value |
 |-------|-------|
 | Name | Indigo Karasu |
-| Email | `mx.indigo.karasu@gmail.com` |
+| Email | `<third-party-or-user-email>` |
 | Project URL | `https://github.com/indigokarasu` |
 | Stated use case | "Personal AI assistant queries; non-commercial; rate-respectful" |
 
@@ -38,7 +38,7 @@ Each source in `scripts/sources.yml` declares:
 The default User-Agent sent by the Reach orchestrator for API calls:
 
 ```
-ocas-reach/3.0 (mx.indigo.karasu@gmail.com)
+ocas-reach/3.0 (<third-party-or-user-email>)
 ```
 
 Custom source modules must match this format. SEC EDGAR, MediaWiki, NOAA, and Nominatim all enforce User-Agent rules.
