@@ -31,6 +31,7 @@ _Lookup by what data you need. Cross-references the main source index._
 | Data | Best Source | Alternatives | Notes |
 |------|-------------|--------------|-------|
 | Social profiles | `linkedin` (main index) | `reddit` (main index) | |
+| Tech/news social feed | Hacker News API | `reddit` (main index) | Top/New/Best stories, comments, users; Firebase JSON, no auth |
 | Reverse image search | Yandex Images | Google Images | Via browser (Yandex) or residential IP (Google) |
 
 ### Geocoding & Places
@@ -403,5 +404,18 @@ _Newest additions go here first. When fully categorized and indexed, move to Reg
 - **Notes**: Different from existing `nasa` source (which covers api.nasa.gov query APIs like APOD/NEO/EONET). GIBS is a tile imagery service — complementary, not overlapping. The `nasa` source's `eonet` action covers natural events; GIBS covers the underlying imagery. Earth View (colincode0/earth-view) uses GIBS as its primary globe renderer. Also used by VEDA, OpenStreetMap, and many scientific visualization tools.
 - **Integration plan**: Add as `gibs` source with actions: `get_capabilities` (parse layer list from WMTS GetCapabilities XML), `get_tile` (construct tile URL from layer/zoom/row/col/date params), `list_layers` (filtered search across capabilities). Custom connector needed because WMTS is not a simple REST query pattern.
 - **Source session**: current
+
+### News & Social
+
+#### Hacker News API
+- **Endpoint**: `https://hacker-news.firebaseio.com/v0` (Firebase REST)
+- **Data**: Tech-news / social aggregator. `topstories.json`, `newstories.json`, `beststories.json` return arrays of item IDs; `item/<id>.json` returns a story/job/poll/comment object (`by`, `title`, `url`, `text`, `score`, `time`, `descendants`/comment count, `kids`/comment IDs, `parent`); `user/<id>.json` returns a user profile (`id`, `about`, `karma`, `created`, `submitted[]`); `updates.json` returns recently changed items/users. All JSON.
+- **Auth**: None required (public Firebase API)
+- **Rate limits**: Not published; Firebase-backed, generous. Throttle to <1-2/sec to be safe.
+- **Quality**: Primary source maintained by Y Combinator. Real-time community-curated tech/news stories and discussion. Structured, no scraping needed.
+- **Discovered**: 2026-07-23 (reach:api-mine — surfaced from ocas-haiku content-queue workflow that already fetches HN top stories via curl)
+- **Verified**: Live calls confirmed: `/v0/topstories.json` (returns ID array), `/v0/item/<id>.json` (returns full story object with `by`/`descendants`/`kids`/`score` fields).
+- **Notes**: Complements `reddit` (main index) as a social/news signal source. Candidate consumer skills: ocas-haiku (content queue already pulls HN top stories), ocas-sift (tech-news research), ocas-vesper (daily briefing top stories). Better than scraping HN web pages or relying on ad-hoc curl scattered across skills. Initial Reach actions: `top_stories` (fetch + resolve N items), `get_item`, `get_user`, `updates`. Deduplicate against `sources.yml` and this catalog before integration — not currently present.
+- **Source session**: `20260716_175117_de5bb7` (and HN-referencing sessions in the 7d window)
 
 _All other discovered APIs have been moved to the Registry above. This section will populate with new discoveries from future cron runs._

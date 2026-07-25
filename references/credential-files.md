@@ -6,7 +6,9 @@ This file contains credential storage details and API key management for the Rea
 
 ### Environment Variables
 
-Credentials are stored in `{agent_root}/.env` under the env var names declared in `scripts/sources.yml`. Each source that requires authentication declares its `env_var` field.
+Credentials are stored in the **ACTIVE PROFILE's** `.env` under the env var names declared in `scripts/sources.yml`. Each source that requires authentication declares its `env_var` field.
+
+**CRITICAL — which `.env` is actually loaded:** Reach reads `os.environ.get(env_var)` at call time (see `scripts/reach.py`). The env var must be present in the *active profile's* process environment. The active profile is `$HERMES_HOME` (e.g. `~/.hermes/profiles/indigo`), so the working file is `~/.hermes/profiles/<profile>/.env`. The **global** `~/.hermes/.env` is a different agent root and is NOT loaded into the profile process — a key placed there is invisible to Reach (symptom: `printenv <ENV_VAR>` is empty even though the key exists on disk in the global root). Always store Reach keys in the active profile's `.env`, never the global root.
 
 ### Account Ledger
 
@@ -20,9 +22,15 @@ Reach is authorized to register APIs at sources where `account` is `required` or
 
 | Field | Value |
 |-------|-------|
+<<<<<<< Updated upstream
 | Name | Indigo Karasu |
 | Email | `<third-party-or-user-email>` |
 | Project URL | `https://github.com/indigokarasu` |
+=======
+| Name | <agent-name> |
+| Email | `<agent-email>` |
+| Project URL | `https://github.com/<agent-handle>` |
+>>>>>>> Stashed changes
 | Stated use case | "Personal AI assistant queries; non-commercial; rate-respectful" |
 
 ## Source Auth Configuration
@@ -38,7 +46,11 @@ Each source in `scripts/sources.yml` declares:
 The default User-Agent sent by the Reach orchestrator for API calls:
 
 ```
+<<<<<<< Updated upstream
 ocas-reach/3.0 (<third-party-or-user-email>)
+=======
+ocas-reach/3.0 (<agent-email>)
+>>>>>>> Stashed changes
 ```
 
 Custom source modules must match this format. SEC EDGAR, MediaWiki, NOAA, and Nominatim all enforce User-Agent rules.

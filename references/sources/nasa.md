@@ -22,7 +22,11 @@ Use NASA for: imagery (especially for daily briefings — APOD), space hazards, 
 | Account URL | https://api.nasa.gov/ |
 | Plan tier | free |
 
+<<<<<<< Updated upstream
 Reach is authorized to register at api.nasa.gov using `<third-party-or-user-email>`. The signup form is one page (name, email, "what are you using this for"). Key issued instantly. The placeholder `DEMO_KEY` works but is shared and rate-limited to 30/hour — register and use a real key.
+=======
+Reach is authorized to register at api.nasa.gov using `<agent-email>`. The signup form is one page (name, email, "what are you using this for"). Key issued instantly. The placeholder `DEMO_KEY` works but is shared and rate-limited to 30/hour — register and use a real key.
+>>>>>>> Stashed changes
 
 ## Limits
 

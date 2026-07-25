@@ -8,7 +8,11 @@ Live world-data query engine. Queries real-time external APIs for factual ground
 **Version:** 3.11.1
 **Type:** 
 **Layer:** data-science
+<<<<<<< Updated upstream
 **Author:** Indigo Karasu
+=======
+**Author:** <agent-name>
+>>>>>>> Stashed changes
 
 ---
 

@@ -15,7 +15,11 @@ Use Wikipedia for: general factual lookups, definitions, biographical / institut
 | Required | none |
 | Account | not needed |
 
+<<<<<<< Updated upstream
 But the MediaWiki API **does require a meaningful `User-Agent`**. Reach sends `ocas-reach/3.0 (<third-party-or-user-email>)` automatically.
+=======
+But the MediaWiki API **does require a meaningful `User-Agent`**. Reach sends `ocas-reach/3.0 (<agent-email>)` automatically.
+>>>>>>> Stashed changes
 
 ## Limits
 

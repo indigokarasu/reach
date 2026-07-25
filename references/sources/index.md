@@ -93,6 +93,7 @@ When the **Account** column says `required`, Reach is authorized to register at 
 || `yahoo_finance` | finance | [yahoo_finance.md](yahoo_finance.md) | none | null | Yahoo Finance MCP. Prices, financials, news, recommendations, options. No key. ||
 || `rapidapi` | other | [rapidapi.md](rapidapi.md) | rapidapi_key | varies | 203+ APIs via MCP multiplexer. Finance, crypto, news, geo, weather, security, social, travel. General-purpose marketplace — NOT "local business search." ||
 || `acre_lens` | geo | [acre-lens.md](acre-lens.md) | none | null | AcreLens MCP. US land due-diligence: solar, groundwater, flood zones, building codes, county regulations. No key. ||
+|| `metricduck` | finance | [metricduck.md](metricduck.md) | required | required | MetricDuck MCP. Company fundamentals, screening, comparison. Bearer token via METRICDUCK_API_KEY. Rally Quality/Safety fallback. ||
 
 ---
 
