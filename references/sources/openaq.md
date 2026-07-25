@@ -18,7 +18,7 @@ Use OpenAQ for: current air quality at a point, historical pollution time series
 | Account URL | https://docs.openaq.org/about/about |
 | Plan tier | free |
 
-If a key is desired, Reach is authorized to register at the URL above using `mx.indigo.karasu@gmail.com`. See `references/account_provisioning.md`. Anonymous access works but is rate-limited harder.
+If a key is desired, Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`. Anonymous access works but is rate-limited harder.
 
 ## Limits
 

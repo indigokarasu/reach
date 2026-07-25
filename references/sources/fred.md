@@ -17,7 +17,7 @@ Use FRED for: any US macroeconomic question, central-bank rates worldwide, excha
 | Account URL | https://fred.stlouisfed.org/docs/api/api_key.html |
 | Plan tier | free |
 
-Reach is authorized to register at the URL above using `mx.indigo.karasu@gmail.com`. The signup form asks for name + email + use case; "personal AI assistant; non-commercial" is sufficient. Key issued instantly by email.
+Reach is authorized to register at the URL above using `<third-party-or-user-email>`. The signup form asks for name + email + use case; "personal AI assistant; non-commercial" is sufficient. Key issued instantly by email.
 
 ## Limits
 

@@ -52,7 +52,7 @@ All three new sources use MCP stdio transport (subprocess JSON-RPC) rather than 
 - Custom Python modules for multi-step sources: `scripts/sources/sec_edgar.py`, `scripts/sources/pubmed.py`, `scripts/sources/wikidata_sparql.py`, plus shared `scripts/sources/_http.py`
 - `references/sources/index.md` — authoritative source index with category, auth, account, quota, and routing-hints tables
 - Per-source reference files at `references/sources/<slug>.md` (37 sources) covering data scope, endpoints, response shape, pitfalls
-- `references/account_provisioning.md` with explicit account-creation grant authorizing Reach to register accounts at `account: required` and `account: optional` sources using `mx.indigo.karasu@gmail.com`
+- `references/account_provisioning.md` with explicit account-creation grant authorizing Reach to register accounts at `account: required` and `account: optional` sources using `<third-party-or-user-email>`
 - `references/usage_tracking.md` documenting the `usage.jsonl` log and quota derivation
 - New CLI subcommands: `reach.py sources`, `reach.py source <name>`, `reach.py usage [--month YYYY-MM]`
 - `_template.md` skeleton for adding new source references

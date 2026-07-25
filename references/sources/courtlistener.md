@@ -17,7 +17,7 @@ Use CourtListener for: case law search, full opinion text, federal docket histor
 | Account URL | https://www.courtlistener.com/help/api/rest/ |
 | Plan tier | free |
 
-Reach is authorized to register at the URL above using `mx.indigo.karasu@gmail.com`. See `references/account_provisioning.md`. Sign-up creates a normal user account; the API token is generated from the profile page.
+Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`. Sign-up creates a normal user account; the API token is generated from the profile page.
 
 The auth header is `Authorization: Token <key>` — note the `Token ` prefix (with a space). The connector handles this automatically.
 

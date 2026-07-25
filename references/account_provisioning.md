@@ -7,7 +7,7 @@ Reach is **explicitly authorized** to register accounts at any source listed in 
 | Field | Value |
 |---|---|
 | Name | Indigo Karasu |
-| Email | `mx.indigo.karasu@gmail.com` |
+| Email | `<third-party-or-user-email>` |
 | Organization | OpenClaw Agent Suite (OCAS) |
 | Stated use case | "Personal AI assistant queries; non-commercial; rate-respectful" |
 
@@ -39,7 +39,7 @@ For sources that require a website / project URL, use `https://github.com/indigo
   "accounts": [
     {
       "source": "fred",
-      "account_email": "mx.indigo.karasu@gmail.com",
+      "account_email": "<third-party-or-user-email>",
       "registered_at": "2026-04-26T18:00:00Z",
       "env_var": "FRED_KEY",
       "key_set_at": "2026-04-26T18:01:30Z",
@@ -60,7 +60,7 @@ Rules:
 ## What Reach is NOT authorized to do
 
 - Pay for a paid tier or upgrade plan, even if a free trial is offered. If a feature requires payment, surface it to the user and stop.
-- Use the user's personal email or any other identity besides `mx.indigo.karasu@gmail.com`.
+- Use the user's personal email or any other identity besides `<third-party-or-user-email>`.
 - Register at sources outside `sources.yml`. New sources go through the "Adding a new source" workflow first (registry update + reference doc + version bump), THEN registration.
 - Solve billing-related captchas (most registration captchas are fine; billing flows are a hard stop).
 - Accept ToS that include arbitration waivers, exclusivity clauses, or anything beyond standard non-commercial API usage. If unclear, defer to the user.

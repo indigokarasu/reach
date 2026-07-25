@@ -1,10 +1,10 @@
 # Source Integration Workflow
 
-Use this when owner provides a new candidate source for Reach.
+Use this when <operator> provides a new candidate source for Reach.
 
 ## Default stance
 
-When owner gives a new source for `ocas-reach`, integrate it into the runtime registry unless there is a hard blocker. Discovery-only cataloging is insufficient.
+When <operator> gives a new source for `ocas-reach`, integrate it into the runtime registry unless there is a hard blocker. Discovery-only cataloging is insufficient.
 
 ## Required workflow
 
@@ -22,13 +22,13 @@ When owner gives a new source for `ocas-reach`, integrate it into the runtime re
 A hard blocker is something that prevents runtime use despite normal agent effort, such as:
 
 - Required credentials or API key not yet provisioned.
-- Paid account or terms acceptance requiring owner's decision.
+- Paid account or terms acceptance requiring <operator>'s decision.
 - Legal/terms restriction incompatible with Reach use.
 - No stable machine-readable access after verification.
 
 ## Do not stop at discovery
 
-`references/discovered-apis.md` is not the endpoint when owner explicitly supplies a source. Use it only as background or for sources that fail integration criteria. The expected final state is a registered source or an explicit hard-blocker registration/error path.
+`references/discovered-apis.md` is not the endpoint when <operator> explicitly supplies a source. Use it only as background or for sources that fail integration criteria. The expected final state is a registered source or an explicit hard-blocker registration/error path.
 
 ## Pattern examples from July 2026
 

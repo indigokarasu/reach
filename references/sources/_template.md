@@ -13,7 +13,7 @@
 | Account URL | https://… |
 | Plan tier | free |
 
-If account is required, Reach is authorized to register at the URL above using `mx.indigo.karasu@gmail.com`. See `references/account_provisioning.md`.
+If account is required, Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`.
 
 ## Limits
 

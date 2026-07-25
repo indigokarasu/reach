@@ -15,7 +15,7 @@ Coverage: DOI-registered scholarly content. ~30M articles, ~40% have an OA copy 
 | Account URL | — |
 | Plan tier | free (polite pool with email) |
 
-When making API calls, include `?email=mx.indigo.karasu@gmail.com` for polite pool access (higher rate limits).
+When making API calls, include `?email=<third-party-or-user-email>` for polite pool access (higher rate limits).
 
 ## Limits
 
