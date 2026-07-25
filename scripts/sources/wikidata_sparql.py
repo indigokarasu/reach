@@ -1,4 +1,5 @@
 """Wikidata SPARQL endpoint + entity lookup."""
+import os
 from . import _http
 
 SPARQL = "https://query.wikidata.org/sparql"
@@ -7,7 +8,7 @@ ENTITY = "https://www.wikidata.org/wiki/Special:EntityData"
 
 def _headers(auth):
     return {
-        "User-Agent": auth.get("user_agent", "ocas-reach (contact: mx.indigo.karasu@gmail.com)"),
+        "User-Agent": auth.get("user_agent", "ocas-reach (contact: os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com"))"),
         "Accept": "application/sparql-results+json",
     }
 

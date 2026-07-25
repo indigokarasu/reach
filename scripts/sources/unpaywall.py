@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger("ocas-reach.unpaywall")
 
 BASE_URL = "https://api.unpaywall.org/v2"
-EMAIL = "mx.indigo.karasu@gmail.com"
+EMAIL = "os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com")"
 
 
 def _fetch(path_or_doi: str, params: Optional[Dict] = None) -> Dict[str, Any]:
