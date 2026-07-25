@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+import os
 Reach weather connector — consolidated NWS + SPC + METAR + Open-Meteo.
 
 Wraps the data-tier tools from the hermes-weather-plugin into a single
@@ -32,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 _SESSION = requests.Session()
 _SESSION.headers.update({
-    "User-Agent": "ocas-reach/3.0 (mx.indigo.karasu@gmail.com)",
+    "User-Agent": "ocas-reach/3.0 (os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com"))",
     "Accept": "application/geo+json,application/json",
 })
 _TIMEOUT = 30

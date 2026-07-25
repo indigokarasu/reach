@@ -35,7 +35,7 @@ USAGE_LOG = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "comm
 DATA_DIR = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/data/ocas-reach"
 JOURNAL_DIR = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/journals/ocas-reach"
 
-USER_AGENT = "ocas-reach (contact: mx.indigo.karasu@gmail.com)"
+USER_AGENT = "ocas-reach (contact: os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com"))"
 
 # ---------------------------------------------------------------------------
 # Registry access
