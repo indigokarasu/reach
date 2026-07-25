@@ -1719,6 +1719,29 @@ sources:
       detail:
         description: "Get item details by ID. params: {id: '...', type: 'book|paper'}"
 
+  metricduck:
+    category: finance
+    reference: metricduck.md
+    auth: required
+    account: required
+    env_var: METRICDUCK_API_KEY
+    account_url: https://www.metricduck.com
+    custom: metricduck_mcp
+    mcp: true
+    mcp_url: https://mcp.metricduck.com/mcp
+    transport: streamable-http
+    rate: no published cap; respect throttling
+    note: "Company fundamentals / screening. Bearer token (METRICDUCK_API_KEY) sent on every MCP tools/call. Registered by <operator> 2026-07-20; 6/6 successful queries same day. Not yet invoked by Rally — pending addition to Rally market-data-sources degradation chain."
+    actions:
+      search_companies:
+        description: "Search companies by query. params: {query, limit?}"
+      company_overview:
+        description: "Company fundamentals overview. params: {ticker|name}"
+      compare_companies:
+        description: "Side-by-side company comparison. params: {companies: [...], metrics?}"
+      screen_companies:
+        description: "Screen companies by fundamentals criteria. params: {criteria}"
+
   acre_lens:
     category: geo
     reference: acre-lens.md

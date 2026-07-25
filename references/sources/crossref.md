@@ -15,7 +15,11 @@ Use Crossref for: DOI → metadata resolution, listing all works for a journal/p
 | Required | none |
 | Account | not needed |
 
+<<<<<<< Updated upstream
 The polite pool requires a `mailto` parameter on every request. Reach injects `mailto=<third-party-or-user-email>` automatically; without it you're in the public pool with degraded latency.
+=======
+The polite pool requires a `mailto` parameter on every request. Reach injects `mailto=<agent-email>` automatically; without it you're in the public pool with degraded latency.
+>>>>>>> Stashed changes
 
 ## Limits
 

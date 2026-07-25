@@ -17,7 +17,11 @@ Use GeoNames for: "city ID for X", elevation at a coord, timezone for a coord, c
 | Account URL | https://www.geonames.org/login |
 | Plan tier | free |
 
+<<<<<<< Updated upstream
 GeoNames uses a **username**, not a key — pass the username as `username` query param. Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`.
+=======
+GeoNames uses a **username**, not a key — pass the username as `username` query param. Reach is authorized to register at the URL above using `<agent-email>`. See `references/account_provisioning.md`.
+>>>>>>> Stashed changes
 
 **Important post-signup step:** after registering, you must explicitly *enable web services* on the account page (Settings → "Free Web Services" → click to enable). Without this step, every query returns an authentication error. Email confirmation is also required before login.
 
@@ -83,7 +87,7 @@ python3 scripts/reach.py query geonames nearby '{
 
 ## Pitfalls
 
-- **Username, not API key.** Pass `username=indigokarasu` (or whatever the registered username is); ignoring this returns auth errors.
+- **Username, not API key.** Pass `username=<agent-handle>` (or whatever the registered username is); ignoring this returns auth errors.
 - **Account must enable web services explicitly.** Confirmed email + clicking "Free Web Services" on the account page is required. Until then, every call fails with `the account is not yet activated`.
 - **Daily cap returns JSON error**, not 429. Look for `status: {message: "the daily limit ..."}` in the response.
 - **Feature class/code matters.** `featureClass: "P"` = populated places (cities, villages); `A` = administrative divisions; `H` = hydrographic features; `L` = parks/areas; `S` = spots/buildings; `T` = mountains/hills; `V` = forest, woods. Without filtering, results include all feature types.

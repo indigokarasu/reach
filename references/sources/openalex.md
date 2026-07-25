@@ -15,7 +15,11 @@ Use OpenAlex for: paper search, citation analysis, "papers about X by author Y",
 | Required | none |
 | Account | optional |
 
+<<<<<<< Updated upstream
 Adding `mailto=<third-party-or-user-email>` (or any email) as a query param puts you in the **polite pool** — same rate, faster service in practice. The connector adds this automatically when an email is provided in the registry.
+=======
+Adding `mailto=<agent-email>` (or any email) as a query param puts you in the **polite pool** — same rate, faster service in practice. The connector adds this automatically when an email is provided in the registry.
+>>>>>>> Stashed changes
 
 ## Limits
 

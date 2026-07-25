@@ -2,7 +2,7 @@
 name: ocas-reach
 license: MIT
 description: 'Live world-data query engine. Queries real-time external APIs for factual ground truth — no synthesis, no opinion, no research. Routes requests through a registry of ~55 registered sources covering US government data, scholarly literature, weather and hazards, geocoding, finance and macro indicators, court records, nutrition, news events, property records, land due-diligence, academic papers, satellite imagery, and product manuals (3M+). Do not use for web research (use Sift), entity investigations (use Scout), or pattern analysis over historical signals.'
-source: https://github.com/indigokarasu/reach
+source: https://github.com/<agent-handle>/reach
 includes:
 - references/**
 - scripts/**
@@ -105,13 +105,16 @@ See `references/source-evaluation-framework.md` for the evaluation checklist and
 
 **RapidAPI is general-purpose marketplace (Jun 12, 2026)** — 203 endpoints (finance, crypto, news, geo, weather, security, social, travel). NOT "local business search." Route via `reach.query rapidapi`. When one skill uses a narrow slice of a tool, don't let that define the tool for all skills. Always check canonical source/definition of a multi-skill shared tool.
 
+**ExchangeRate source doc is STALE (2026-07-24)** — `sources.yml` declares `exchangerate:` with `auth: none`, but `https://api.exchangerate.host` now returns `code 101 missing_access_key` (requires `access_key`). Treat as effectively key-required until the source doc is updated to declare an `env_var`. Always live-verify a source's auth requirement rather than trusting the registry.
+
 ## Support File Map
 
 | File | When to read |
 |------|-------------|
 | `references/sources/index.md` | Before picking which source to use for a query; when checking routing hints |
 | `references/sources/<slug>.md` | Before building a query for a specific source; when you need actions, params, response shape, or pitfalls |
-| `references/account_provisioning.md` | Before registering at a source that requires an account; when creating API keys |
+| `references/credential-files.md` | Credential storage, env_var names, **which `.env` the active profile actually loads** |
+| `references/credential-files.md` | When auditing whether a source is accessible — start here; misplaced keys (global root vs active profile) are the #1 cause of "key not found" |
 | `references/usage_tracking.md` | When checking quota status or usage counts; when debugging rate-limit issues |
 | `references/source-evaluation-framework.md` | Before adding a new source to the registry; when evaluating candidate APIs |
 | `references/storage-layout.md` | When inspecting or configuring the on-disk data and journal directories |

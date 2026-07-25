@@ -15,7 +15,11 @@ Use NWS for: authoritative US forecasts, severe-weather alerts (tornado, flash f
 | Required | none |
 | Account | not needed |
 
+<<<<<<< Updated upstream
 NWS requires every request carry a `User-Agent` identifying the caller with a contact. Reach sends `ocas-reach (<third-party-or-user-email>)` automatically.
+=======
+NWS requires every request carry a `User-Agent` identifying the caller with a contact. Reach sends `ocas-reach (<agent-email>)` automatically.
+>>>>>>> Stashed changes
 
 ## Limits
 
