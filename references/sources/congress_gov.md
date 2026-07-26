@@ -17,11 +17,7 @@ Use Congress.gov for: tracking a specific bill's status, "who sponsors X", membe
 | Account URL | https://api.congress.gov/sign-up/ |
 | Plan tier | free |
 
-<<<<<<< Updated upstream
-Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`. The signup form asks for name + email + use case; a key is emailed within a few minutes.
-=======
 Reach is authorized to register at the URL above using `<agent-email>`. See `references/account_provisioning.md`. The signup form asks for name + email + use case; a key is emailed within a few minutes.
->>>>>>> Stashed changes
 
 ## Limits
 

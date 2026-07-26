@@ -22,11 +22,7 @@ Use USDA FoodData for: authoritative US nutrition data on raw foods (broccoli, s
 | Account URL | https://api.nal.usda.gov/fdc/ |
 | Plan tier | free |
 
-<<<<<<< Updated upstream
-Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`. The signup is via api.data.gov — same key works for many federal APIs (NASA, govinfo).
-=======
 Reach is authorized to register at the URL above using `<agent-email>`. See `references/account_provisioning.md`. The signup is via api.data.gov — same key works for many federal APIs (NASA, govinfo).
->>>>>>> Stashed changes
 
 ## Limits
 

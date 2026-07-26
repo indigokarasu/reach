@@ -13,11 +13,7 @@
 | Account URL | https://… |
 | Plan tier | free |
 
-<<<<<<< Updated upstream
-If account is required, Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`.
-=======
 If account is required, Reach is authorized to register at the URL above using `<agent-email>`. See `references/account_provisioning.md`.
->>>>>>> Stashed changes
 
 ## Limits
 

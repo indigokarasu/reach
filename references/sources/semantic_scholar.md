@@ -17,11 +17,7 @@ Use Semantic Scholar for: paper recommendations from a seed paper, citation cont
 | Account URL | https://www.semanticscholar.org/product/api |
 | Plan tier | free / partner |
 
-<<<<<<< Updated upstream
-If a partner key is desired, Reach is authorized to apply at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`. The partner program isn't auto-issue — applications are reviewed. Anonymous works for low-volume use.
-=======
 If a partner key is desired, Reach is authorized to apply at the URL above using `<agent-email>`. See `references/account_provisioning.md`. The partner program isn't auto-issue — applications are reviewed. Anonymous works for low-volume use.
->>>>>>> Stashed changes
 
 ## Limits
 

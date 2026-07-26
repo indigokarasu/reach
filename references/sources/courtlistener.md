@@ -17,11 +17,7 @@ Use CourtListener for: case law search, full opinion text, federal docket histor
 | Account URL | https://www.courtlistener.com/help/api/rest/ |
 | Plan tier | free |
 
-<<<<<<< Updated upstream
-Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`. Sign-up creates a normal user account; the API token is generated from the profile page.
-=======
 Reach is authorized to register at the URL above using `<agent-email>`. See `references/account_provisioning.md`. Sign-up creates a normal user account; the API token is generated from the profile page.
->>>>>>> Stashed changes
 
 The auth header is `Authorization: Token <key>` — note the `Token ` prefix (with a space). The connector handles this automatically.
 

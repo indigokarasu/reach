@@ -15,11 +15,7 @@ Coverage: DOI-registered scholarly content. ~30M articles, ~40% have an OA copy 
 | Account URL | — |
 | Plan tier | free (polite pool with email) |
 
-<<<<<<< Updated upstream
-When making API calls, include `?email=<third-party-or-user-email>` for polite pool access (higher rate limits).
-=======
 When making API calls, include `?email=<agent-email>` for polite pool access (higher rate limits).
->>>>>>> Stashed changes
 
 ## Limits
 

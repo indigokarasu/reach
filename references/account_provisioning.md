@@ -6,13 +6,8 @@ Reach is **explicitly authorized** to register accounts at any source listed in 
 
 | Field | Value |
 |---|---|
-<<<<<<< Updated upstream
-| Name | Indigo Karasu |
-| Email | `<third-party-or-user-email>` |
-=======
 | Name | <agent-name> |
 | Email | `<agent-email>` |
->>>>>>> Stashed changes
 | Organization | OpenClaw Agent Suite (OCAS) |
 | Stated use case | "Personal AI assistant queries; non-commercial; rate-respectful" |
 
@@ -44,11 +39,7 @@ For sources that require a website / project URL, use `https://github.com/<agent
   "accounts": [
     {
       "source": "fred",
-<<<<<<< Updated upstream
-      "account_email": "<third-party-or-user-email>",
-=======
       "account_email": "<agent-email>",
->>>>>>> Stashed changes
       "registered_at": "2026-04-26T18:00:00Z",
       "env_var": "FRED_KEY",
       "key_set_at": "2026-04-26T18:01:30Z",
@@ -69,11 +60,7 @@ Rules:
 ## What Reach is NOT authorized to do
 
 - Pay for a paid tier or upgrade plan, even if a free trial is offered. If a feature requires payment, surface it to the user and stop.
-<<<<<<< Updated upstream
-- Use the user's personal email or any other identity besides `<third-party-or-user-email>`.
-=======
 - Use the user's personal email or any other identity besides `<agent-email>`.
->>>>>>> Stashed changes
 - Register at sources outside `sources.yml`. New sources go through the "Adding a new source" workflow first (registry update + reference doc + version bump), THEN registration.
 - Solve billing-related captchas (most registration captchas are fine; billing flows are a hard stop).
 - Accept ToS that include arbitration waivers, exclusivity clauses, or anything beyond standard non-commercial API usage. If unclear, defer to the user.
