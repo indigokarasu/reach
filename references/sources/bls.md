@@ -17,11 +17,7 @@ FRED ingests most BLS series and is usually friendlier — use `bls` directly wh
 | Account URL | https://data.bls.gov/registrationEngine/ |
 | Plan tier | free (v2) |
 
-<<<<<<< Updated upstream
-Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`. Without a key (v1 access) you're capped at 25 queries/day with reduced features; v2 with key gives 500/day.
-=======
 Reach is authorized to register at the URL above using `<agent-email>`. See `references/account_provisioning.md`. Without a key (v1 access) you're capped at 25 queries/day with reduced features; v2 with key gives 500/day.
->>>>>>> Stashed changes
 
 ## Limits
 

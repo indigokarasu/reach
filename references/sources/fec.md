@@ -20,11 +20,7 @@ Use FEC for: "who's funding candidate X", "top donors to committee Y", PAC/super
 | Account URL | https://api.open.fec.gov/developers/ |
 | Plan tier | free |
 
-<<<<<<< Updated upstream
-Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`. Key is via api.data.gov — same key as NASA/USDA/govinfo. Issued instantly.
-=======
 Reach is authorized to register at the URL above using `<agent-email>`. See `references/account_provisioning.md`. Key is via api.data.gov — same key as NASA/USDA/govinfo. Issued instantly.
->>>>>>> Stashed changes
 
 ## Limits
 

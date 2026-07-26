@@ -17,11 +17,7 @@ Use GeoNames for: "city ID for X", elevation at a coord, timezone for a coord, c
 | Account URL | https://www.geonames.org/login |
 | Plan tier | free |
 
-<<<<<<< Updated upstream
-GeoNames uses a **username**, not a key — pass the username as `username` query param. Reach is authorized to register at the URL above using `<third-party-or-user-email>`. See `references/account_provisioning.md`.
-=======
 GeoNames uses a **username**, not a key — pass the username as `username` query param. Reach is authorized to register at the URL above using `<agent-email>`. See `references/account_provisioning.md`.
->>>>>>> Stashed changes
 
 **Important post-signup step:** after registering, you must explicitly *enable web services* on the account page (Settings → "Free Web Services" → click to enable). Without this step, every query returns an authentication error. Email confirmation is also required before login.
 

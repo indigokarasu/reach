@@ -22,15 +22,9 @@ Reach is authorized to register APIs at sources where `account` is `required` or
 
 | Field | Value |
 |-------|-------|
-<<<<<<< Updated upstream
-| Name | Indigo Karasu |
-| Email | `<third-party-or-user-email>` |
-| Project URL | `https://github.com/indigokarasu` |
-=======
 | Name | <agent-name> |
 | Email | `<agent-email>` |
 | Project URL | `https://github.com/<agent-handle>` |
->>>>>>> Stashed changes
 | Stated use case | "Personal AI assistant queries; non-commercial; rate-respectful" |
 
 ## Source Auth Configuration
@@ -46,11 +40,7 @@ Each source in `scripts/sources.yml` declares:
 The default User-Agent sent by the Reach orchestrator for API calls:
 
 ```
-<<<<<<< Updated upstream
-ocas-reach/3.0 (<third-party-or-user-email>)
-=======
 ocas-reach/3.0 (<agent-email>)
->>>>>>> Stashed changes
 ```
 
 Custom source modules must match this format. SEC EDGAR, MediaWiki, NOAA, and Nominatim all enforce User-Agent rules.

@@ -22,11 +22,7 @@ This connector deliberately does NOT fetch full filing documents (10-K text bodi
 | Required | none |
 | Account | not needed |
 
-<<<<<<< Updated upstream
-But SEC enforces a strict rule: **every request must include a `User-Agent` identifying the caller** with a contact email. Anonymous or generic UAs return 403 and may earn an IP block. Reach sends `ocas-reach (contact: <third-party-or-user-email>)` automatically.
-=======
 But SEC enforces a strict rule: **every request must include a `User-Agent` identifying the caller** with a contact email. Anonymous or generic UAs return 403 and may earn an IP block. Reach sends `ocas-reach (contact: <agent-email>)` automatically.
->>>>>>> Stashed changes
 
 ## Limits
 
