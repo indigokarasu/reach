@@ -28,12 +28,12 @@ Coverage: virtually all DOI-registered scholarly content including paywalled jou
 Sci-Hub mirrors go down frequently. This source maintains a prioritized mirror list with automatic failover:
 
 **Primary mirrors (prioritized):**
-1. `sci-hub.st` — primary (186.2.163.201)
+1. `sci-hub.st` — primary (186.2.163.201)  <!-- sanitize-allow: third-party public mirror, not operator infrastructure -->
 2. `sci-hub.su`
 3. `sci-hub.red`
 4. `sci-hub.ren`
 5. `sci-hub.ru` — official
-6. `sci-hub.box` — fallback (190.115.31.76)
+6. `sci-hub.box` — fallback (190.115.31.76)  <!-- sanitize-allow: third-party public mirror, not operator infrastructure -->
 7. `www.sci-hub.pub` — mirror directory
 8. `sci-hub.al`
 9. `sci-hub.mk`

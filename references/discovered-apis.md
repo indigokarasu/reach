@@ -419,3 +419,34 @@ _Newest additions go here first. When fully categorized and indexed, move to Reg
 - **Source session**: `20260716_175117_de5bb7` (and HN-referencing sessions in the 7d window)
 
 _All other discovered APIs have been moved to the Registry above. This section will populate with new discoveries from future cron runs._
+
+### Travel & Lodging
+| Data | Best Source | Alternatives | Notes |
+|------|-------------|--------------|-------|
+| Flight search + real booking | LetsFG API | `fli` lib (Google Flights data) | Agent-native CLI/SDK/MCP; booking requires card-on-file auth |
+| Day-use hotel rates | HotelsByDay API | browser scrape | Internal JSON API at api.hotelsbyday.com; integrated in Voyage script |
+| Overnight hotel rates + compare | HotelOracle MCP (SerpAPI backend) | Google Hotels (browser) | 8 research-only tools |
+| Hotel booking w/ identity-verified tools | 1Stay MCP (mcp.stayker.com) | — | 8 tools incl. lookup/cancel/resend; Bearer auth |
+
+#### LetsFG API
+- **Endpoint**: CLI (`letsfg`), Python SDK, MCP (`npx letsfg-mcp`); docs https://letsfg.co/for-agents
+- **Access**: Freemium search AFTER one-time `letsfg auth` (zero-amount Stripe card-on-file → 90-day Bearer token). NEVER use `/developers/api/v1/agents/register` or `setup-payment` (paid Developer billing).
+- **Data**: Flight search/book across airlines+OTAs incl. budget carriers; hotel search/book (free-cancellation pay-later rates, 5% non-refundable reservation fee).
+- **Verdict**: Confirmed working; already integrated into ocas-voyage (`references/letsfg.md`). Better than scraping for actual booking without OTA redirect.
+
+#### HotelsByDay API
+- **Endpoint**: `https://api.hotelsbyday.com` (internal JSON API discovered from site JS)
+- **Access**: No public key required for autocomplete/search/hotel-detail flows used by the site.
+- **Data**: Day-use (daytime) hotel availability, rates, room detail.
+- **Verdict**: Confirmed working; integrated into ocas-voyage as `scripts/hotelsbyday_search.py`. Better than browser scraping.
+
+#### HotelOracle MCP
+- **Endpoint**: Via Glama connector (io.tooloracle/hoteloracle); SerpAPI-backed
+- **Access**: MCP tools: search_hotels, hotel_details, price_calendar, price_compare, area_guide, best_deals, nearby_attractions, health_check.
+- **Data**: Multi-site hotel rate comparison.
+- **Verdict**: Research-only (no booking); known failure mode: SerpAPI empty responses with auto-refunded credits. Integrated in ocas-voyage lodging-sources.md.
+
+#### 1Stay MCP (stayker)
+- **Endpoint**: `https://mcp.stayker.com/mcp`, Bearer auth (sandbox vs production key scopes)
+- **Access**: 8 tools: search, details, lookup_booking, get_booking, cancel_booking (two-step), resend_confirmation, search_tools; chain_code brand filter.
+- **Verdict**: Documented live 2026-08-08; integrated in ocas-voyage lodging-sources.md. Rate codes expire in 15 min; checkout URLs in 30 min.
