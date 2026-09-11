@@ -420,6 +420,26 @@ _Newest additions go here first. When fully categorized and indexed, move to Reg
 
 _All other discovered APIs have been moved to the Registry above. This section will populate with new discoveries from future cron runs._
 
+### Music & Audio
+
+#### MusicBrainz API
+- **Endpoint**: `https://musicbrainz.org/ws/2/` (REST); docs `https://musicbrainz.org/doc/MusicBrainz_API`; also `https://beta.musicbrainz.org/ws/2/` (beta)
+- **Data**: Authoritative music metadata database — artists, releases/albums, release-groups, recordings (songs), works, labels, places, events, instruments, series, URLs. Each entity carries stable UUID (**MBID**) identifiers, artist-credit, dates, barcodes, ASIN, label/catalog info, track/medium counts, country, lyrics/relations via linked entities. Supports structured search (`?query=artist:"X" AND release:"Y"`) per entity type plus direct MBID lookups, browse (`?inc=`), and linked entity `inc` includes (release-groups, recordings, etc.).
+- **Auth**: None required for public read (must send a descriptive `User-Agent` identifying the client; the API `403`s or `503`s bare/HTTP-client defaults).
+- **Rate limits**: Public pool ~1 request/sec / 100 req/min; extremely strict. Self-host the data (MusicBrainz data is CC0, released under the Open Data license; monthly data dumps + `brainz-musicbrainz-docker` replication available) for heavier use.
+- **Quality**: Community-curated primary source (the de-facto canonical music identifier system, used as the identifier backbone by Spotify, Wikipedia, and music fingerprinting). CC0/Open Data licensed.
+- **Discovered**: 2026-09-11 (reach:api-mine — surfaced from the DroppedNeedle music-library session, which resolved 2021 albums / 897 artists from Google Drive to MBIDs via this API)
+- **Verified**: Live `release` search (`query=artist:"Lykke Li" AND release:"Wounded Rhymes"`) returned real structured release JSON including MBID, artist-credit, barcode, label-info, track-count (HTTP 200). One subsequent rapid artist lookup returned `503 busy` — confirming the aggressive 1 req/sec limit; throttle strictly.
+- **Notes**: Complements existing `openalex`/`arxiv` scholarly sources for a factual music-metadata domain. Candidate consumer skills: ocas-haiku (music content), ocas-sift (music research), ocas-reach (music fact lookup), ocas-voyage (venue/event context). No existing source in `sources.yml` covers music metadata. Initial Reach actions: `search` (per entity type: artist/release/release-group/recording/work/label), `get_entity` by MBID, `browse` with `inc` links. Mandatory descriptive User-Agent; throttle to ~1/sec.
+- **Source session**: `20260911_020506_ebd047` (and `20260911_004332_793d948d` DroppedNeedle setup)
+
+#### DroppedNeedle REST API (self-hosted service)
+- **Endpoint**: `/api/v1` on the deployed instance (`tunes.indigokarasu.com`); OpenAPI spec at `/openapi.json` on the same instance
+- **Access**: Self-hosted Docker service (port 8688), behind nginx basic-auth + app login on `tunes.indigokarasu.com`; has an API key for the slskd backend integration. Uri is instance-specific — not a public shared API.
+- **Data**: Music search/download via the slskd (Soulseek) backend — search artists/albums/tracks, queue downloads (FLAC preference), resolve albums to MusicBrainz IDs. Exposes song files through the shared storage mount.
+- **Verdict**: Confirmed working + deployed and health-checked 2026-09-11 (container healthy, reaches slskd API 200). Integrated into the personal music-library workflow (GDrive album list → MBID resolve → queue FLAC downloads). Self-hosted/instance-scoped, so it belongs as a skill-integrated connector (like LetsFG/HotelsByDay) rather than a shared Reach world-data source.
+- **Source session**: `20260911_004332_793d948d`, `20260911_020506_ebd047`
+
 ### Travel & Lodging
 | Data | Best Source | Alternatives | Notes |
 |------|-------------|--------------|-------|
