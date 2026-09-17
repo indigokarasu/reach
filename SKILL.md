@@ -8,7 +8,7 @@ includes:
 - scripts/**
 metadata:
   author: Indigo Karasu (indigokarasu)
-  version: 3.11.1
+  version: "3.12.0"
   hermes:
     category: data-science
     tags:
