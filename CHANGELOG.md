@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.12.0] - 2026-09-16
+
+### Changed
+- **Actionable error envelopes** — `reach.py` wraps HTTP/network errors in JSON envelopes including `actionable_guidance` with retry-backoff rules (429/5xx → backoff; 401/403 → verify credential; 404 → verify path; network → retry+check connectivity) per `spec-ocas-scripts.md`.
+- Fixed pre-existing syntax bug in `USER_AGENT` (nested quote string) breaking the script.
+
+
 ## [3.6.0] - 2026-05-28
 
 ### Added — Consolidated weather source

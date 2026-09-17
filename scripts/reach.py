@@ -35,7 +35,7 @@ USAGE_LOG = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "comm
 DATA_DIR = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/data/ocas-reach"
 JOURNAL_DIR = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/journals/ocas-reach"
 
-USER_AGENT = "ocas-reach (contact: os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com"))"
+USER_AGENT = "ocas-reach (contact: " + os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com") + ")"
 
 # ---------------------------------------------------------------------------
 # Registry access
@@ -149,9 +149,17 @@ def http_call(method, url, headers=None, body=None):
             return {"ok": True, "status": resp.status, "data": raw.decode("utf-8", "replace")}
     except urllib.error.HTTPError as e:
         body_text = e.read().decode("utf-8", "replace")[:1000]
-        return {"ok": False, "error": "http_error", "status": e.code, "message": body_text}
+        # Actionable error envelope: retry-backoff guidance per spec-ocas-scripts.md
+        guidance = (
+            "Retry after backoff if status in (429, 500, 502, 503, 504): "
+            "wait 2**(retry+1)*5s then re-issue; for 401/403 verify the API key/credential; "
+            "for 404 verify the request path/params; escalate lingering 5xx to the source status page."
+        )
+        return {"ok": False, "error": "http_error", "status": e.code, "message": body_text,
+                "actionable_guidance": guidance}
     except urllib.error.URLError as e:
-        return {"ok": False, "error": "network_error", "message": str(e.reason)}
+        return {"ok": False, "error": "network_error", "message": str(e.reason),
+                "actionable_guidance": "Network unreachable (DNS, timeout, connection reset). Retry with backoff; if persistent, check the source endpoint reachability and local connectivity."}
 
 
 # ---------------------------------------------------------------------------
