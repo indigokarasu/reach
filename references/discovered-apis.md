@@ -85,6 +85,11 @@ _Lookup by what data you need. Cross-references the main source index._
 | API discovery | RapidAPI marketplace | `public_apis` (main index) | 203 endpoints across all categories |
 | Product manuals | `manualslib` (main index) | ManualZZ (mirror) | 3M+ manuals, 140K+ brands. Vue.js SPA, direct access blocked. Wayback CDX + image OCR. |
 
+### Web Data Extraction
+| Data | Best Source | Alternatives | Notes |
+|------|-------------|--------------|-------|
+| JS-rendered page content + unblocking | Zyte API | donsetch, sift.webwright | Paid API (usage-based); unblocking, browser rendering, auto-extraction (Product, Article, jobPosting, SERP). Not yet evaluated. |
+
 ### Banking & Transactions
 | Data | Best Source | Alternatives | Notes |
 |------|-------------|--------------|-------|
@@ -391,6 +396,19 @@ _Force-ranked within each data type. Only populated when 2+ discovered APIs comp
 ## Recently Discovered
 
 _Newest additions go here first. When fully categorized and indexed, move to Registry._
+
+### Web Data Extraction
+
+#### Zyte API
+- **Endpoint**: `https://api.zyte.com/v1/extract` (POST); docs `https://docs.zyte.com/`
+- **Data**: Web page content extraction with three capabilities in one call: (1) **unblocking** — anti-bot bypass (proxy rotation, fingerprint matching, challenge solving) via `httpResponseBody` field; (2) **JS rendering** — headless browser load with optional actions (click, scroll, wait, screenshot, geolocation) via `browserHtml` field; (3) **automatic structured extraction** — named data types (Product, Article, ArticleList, productList, jobPosting, forumThread, SERP) extracted by model, no CSS/XPath selectors required. Each result includes a confidence score (`extractionProbability`) and typed/named fields.
+- **Auth**: HTTP Basic Auth — API key as user name, empty password.
+- **Rate limits**: Usage-based (paid); no published hard limit. Pay-per-request pricing on Zyte's website. Free trial available.
+- **Quality**: Commercial-grade extraction maintained by Zyte (same company behind Scrapy). Extraction models are site-adaptive — layout changes don't break selectors. 0.997 extraction probability demonstrated on test page.
+- **Cost**: Paid (usage-based). Requires credit card/billing account. Not currently budgeted.
+- **Discovered**: 2026-09-16 (web research — efoss article "Web Scraping With A Single API" by Ayan Pahwa, Open Source For Us)
+- **Source session**: current
+- **Notes**: Integrates natively with Scrapy via `scrapy-zyte-api` addon and `scrapy-poet` DI. Zyte also publishes a Claude Code plugin for AI-assisted scraper generation. Not yet live-verified from this host. Candidate for sift.fetch tier 3.5 if budget permits and donsetch proves insufficient for anti-bot. For now, catalog only — requires account provisioning + billing authorization before integration.
 
 ### Satellite & Earth Observation
 
