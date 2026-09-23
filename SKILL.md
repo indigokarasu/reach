@@ -35,6 +35,9 @@ triggers:
 
 Reach is the system's **sensory layer** for verified ground truth. It answers "what *is*" — not "what was," not "what should be," not "what might be." Each registered source is a deterministic connector: structured query in, structured response with citation out. No synthesis. No interpretation. Reach returns the fact; downstream skills synthesize.
 
+
+**Support files:** `references/support-file-map.md` indexes the bundled files not covered inline in this skill — check it before working from assumptions about what is (not) available.
+
 ## When to Use
 
 - The user asks about real-time external data with a known authoritative source (USGS, NOAA, FDA, FRED, Congress, Redfin, Open-Meteo, NASA, Wikidata, etc.)
