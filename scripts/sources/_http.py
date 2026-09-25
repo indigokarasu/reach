@@ -1,8 +1,20 @@
 """Shared HTTP helper for custom source modules — stdlib only."""
 import json
+import os
 import urllib.parse
 import urllib.request
 import urllib.error
+
+
+def user_agent():
+    """Outbound User-Agent with an env-resolved contact email.
+
+    Sources like SEC EDGAR, Wikidata and NOAA reject anonymous callers, so the
+    header must identify the agent — but the address is never hardcoded (public
+    repo). Set OCAS_AGENT_EMAIL in the active profile's .env; the placeholder
+    keeps requests working on a host where it is unset.
+    """
+    return "ocas-reach (contact: %s)" % os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com")
 
 
 def get(url, headers=None, timeout=30):

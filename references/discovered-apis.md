@@ -82,7 +82,7 @@ _Lookup by what data you need. Cross-references the main source index._
 | Data | Best Source | Alternatives | Notes |
 |------|-------------|--------------|-------|
 | General web search | SearXNG (main index) | Google CSAPI | CSAPI: programmatic Google search |
-| API discovery | RapidAPI marketplace | `public_apis` (main index) | 203 endpoints across all categories |
+| API discovery | RapidAPI marketplace | `public_apis` (main index) | hundreds of hosts across all categories |
 | Product manuals | `manualslib` (main index) | ManualZZ (mirror) | 3M+ manuals, 140K+ brands. Vue.js SPA, direct access blocked. Wayback CDX + image OCR. |
 
 ### Web Data Extraction
@@ -288,7 +288,7 @@ _Full details per API. Organized by category. Quality-ranked within each categor
 - **Rate limits**: Varies by API; RapidAPI free tier: 500 req/month total
 - **Quality**: Mixed — marketplace aggregates many APIs of varying quality. Useful for discovery, not primary sourcing.
 - **Discovered**: 2026-06-12 (RapidAPI skill review)
-- **Notes**: General-purpose marketplace, NOT "local business search." The `rapidapi` skill is the canonical reference for all 203 endpoints. Use for discovery, then integrate best APIs individually into Reach.
+- **Notes**: General-purpose marketplace, NOT "local business search." The `util-rapidapi` skill is the canonical reference for the host list; counts drift, so read the host registry rather than quoting a number. Use for discovery, then integrate best APIs individually into Reach.
 - **Source session**: `20260612_145529_92eac6`
 
 ### Models & ML
@@ -470,7 +470,7 @@ _All other discovered APIs have been moved to the Registry above. This section w
 - **Endpoint**: CLI (`letsfg`), Python SDK, MCP (`npx letsfg-mcp`); docs https://letsfg.co/for-agents
 - **Access**: Freemium search AFTER one-time `letsfg auth` (zero-amount Stripe card-on-file → 90-day Bearer token). NEVER use `/developers/api/v1/agents/register` or `setup-payment` (paid Developer billing).
 - **Data**: Flight search/book across airlines+OTAs incl. budget carriers; hotel search/book (free-cancellation pay-later rates, 5% non-refundable reservation fee).
-- **Verdict**: Confirmed working; already integrated into ocas-voyage (`references/letsfg.md`). Better than scraping for actual booking without OTA redirect.
+- **Verdict**: Confirmed working; already integrated into the Ocas Voyage skill, which owns `references/letsfg.md` (booking flow, auth steps). Reach does not bundle that doc. Better than scraping when an actual booking is required without an OTA redirect.
 
 #### HotelsByDay API
 - **Endpoint**: `https://api.hotelsbyday.com` (internal JSON API discovered from site JS)

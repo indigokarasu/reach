@@ -2,6 +2,8 @@
 
 This is the authoritative list of every data source registered in `scripts/sources.yml`. Each row links to a per-source reference file under `references/sources/<name>.md`.
 
+Rows marked **MCP surface** are *not* registry entries: they are shared MCP tools invoked directly (`mcp_<name>_<name>_call`), not via `reach.py query`.
+
 ## How to read this index
 
 | Column | Meaning |
@@ -12,7 +14,7 @@ This is the authoritative list of every data source registered in `scripts/sourc
 | **Account** | `null` = no account ever needed, `optional` = key improves limits, `required` = must register |
 | **Daily / Monthly** | Hard caps on free tier when known. Empty = no documented hard cap (rate-limit instead). |
 
-When the **Account** column says `required`, Reach is authorized to register at the source's signup URL using the OCAS persona and store the issued key in `~/.hermes/.env` under the registered env var. See [`account_provisioning.md`](../account_provisioning.md) for the full registration playbook and [`credential-files.md`](../credential-files.md) for the persona details.
+When the **Account** column says `required`, Reach is authorized to register at the source's signup URL using the OCAS persona and store the issued key in the **active profile's** `.env` (`$HERMES_HOME/.env` — the global `~/.hermes/.env` is not loaded into the profile process) under the registered env var. See [`account_provisioning.md`](../account_provisioning.md) for the full registration playbook and [`credential-files.md`](../credential-files.md) for why the profile file is the one that counts.
 
 ---
 
@@ -36,15 +38,15 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | `noaa_nws` | weather | [noaa_nws.md](noaa_nws.md) | none | official US forecasts + alerts |
 | `usgs_earthquake` | weather | [usgs_earthquake.md](usgs_earthquake.md) | none | FDSN spec quake events |
 | `nominatim` | geo | [nominatim.md](nominatim.md) | none | OSM geocoding, 1 req/sec absolute |
-|| `open_library` | knowledge | [open_library.md](open_library.md) | none | books, authors, ISBN |
-|| `scihub` | science | [scihub.md](scihub.md) | none | academic papers via Sci-Hub mirrors; ~85M papers |
-|| `unpaywall` | science | [unpaywall.md](unpaywall.md) | none | open-access paper lookup; ~30M papers, legal OA copies |
-|| `public_apis` | knowledge | [public_apis.md](public_apis.md) | none | collective directory of free public APIs |
-|| `rest_countries` | geo | [rest_countries.md](rest_countries.md) | none | country metadata |
-|| `open_food_facts` | knowledge | [open_food_facts.md](open_food_facts.md) | none | packaged food + barcodes |
-|| `weather` | weather | [weather.md](weather.md) | none | unified US weather: conditions, forecast, alerts, metar, brief + global via Open-Meteo. Default for all weather queries. |
-|| `welib` | knowledge | [welib.md](welib.md) | none | 43M books + 98M papers; Cloudflare-protected, may need browser |
-|| `openaq` | weather | [openaq.md](openaq.md) | optional | global air-quality measurements |
+| `open_library` | knowledge | [open_library.md](open_library.md) | none | books, authors, ISBN |
+| `scihub` | science | [scihub.md](scihub.md) | none | academic papers via Sci-Hub mirrors; ~85M papers |
+| `unpaywall` | science | [unpaywall.md](unpaywall.md) | none | open-access paper lookup; ~30M papers, legal OA copies |
+| `public_apis` | knowledge | [public_apis.md](public_apis.md) | none | collective directory of free public APIs |
+| `rest_countries` | geo | [rest_countries.md](rest_countries.md) | none | country metadata |
+| `open_food_facts` | knowledge | [open_food_facts.md](open_food_facts.md) | none | packaged food + barcodes |
+| `weather` | weather | [weather.md](weather.md) | none | unified US weather: conditions, forecast, alerts, metar, brief + global via Open-Meteo. Default for all weather queries. |
+| `welib` | knowledge | [welib.md](welib.md) | none | 43M books + 98M papers; Cloudflare-protected, may need browser |
+| `openaq` | weather | [openaq.md](openaq.md) | optional | global air-quality measurements |
 | `photon` | geo | [photon.md](photon.md) | none | OSM geocoding, faster alt to Nominatim |
 | `worldtime` | geo | [worldtime.md](worldtime.md) | none | timezone + DST |
 | `nager_holidays` | knowledge | [nager_holidays.md](nager_holidays.md) | none | public holidays, ~100 countries |
@@ -57,7 +59,6 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | `nonprofit_explorer` | government | [nonprofit_explorer.md](nonprofit_explorer.md) | none | IRS 990 data, nonprofit financials |
 | `ncbi_datasets` | health | [ncbi_datasets.md](ncbi_datasets.md) | none | genomic data, gene function, taxonomy |
 | `space_weather` | science | [space_weather.md](space_weather.md) | none | solar flares, geomagnetic storms, ISS location |
-| `exchangerate` | finance | [exchangerate.md](exchangerate.md) | none | currency exchange rates, no key needed |
 | `transit_land` | geo | [transit_land.md](transit_land.md) | none | transit routes, stops, schedules worldwide |
 | `ev_charging` | geo | [ev_charging.md](ev_charging.md) | none | EV charging station locations worldwide |
 | `manualslib` | knowledge | [manualslib.md](manualslib.md) | none | 3M+ product manuals, 140K+ brands. Vue.js SPA, direct access blocked. Wayback CDX + image OCR. |
@@ -79,6 +80,7 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | `fec` | government | [fec.md](fec.md) | `FEC_KEY` | https://api.open.fec.gov/developers/ | — | — | campaign finance |
 | `geonames` | geo | [geonames.md](geonames.md) | `GEONAMES_USERNAME` | https://www.geonames.org/login | 20000 | — | populated places, elevation, timezone |
 | `airnow` | weather | [airnow.md](airnow.md) | `AIRNOW_KEY` | https://docs.airnowapi.org/ | — | — | official US EPA Air Quality Index |
+| `exchangerate` | finance | [exchangerate.md](exchangerate.md) | `EXCHANGERATE_KEY` | https://exchangerate.host/ | — | — | current + historical FX rates; an unkeyed call returns HTTP 200 with `success: false` |
 
 ---
 
@@ -87,13 +89,18 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | Source | Category | Reference | Auth | Account | Notes |
 |--------|----------|-----------|------|---------|-------|
 | `reddit` | media | [reddit.md](reddit.md) | optional | optional | Reddit browser via MCP. Anonymous (10/min) or OAuth (60-100/min). |
-| `linkedin` | media | [linkedin.md](linkedin.md) | required | required | LinkedIn profiles, companies, jobs via browser automation. Requires login. |
+| `linkedin` | media | [linkedin.md](linkedin.md) | required | required | LinkedIn profiles, companies, jobs via browser automation. Requires login (`LINKEDIN_USER_DATA_DIR`). |
 | `paper_search` | science | [paper_search.md](paper_search.md) | optional | null | Multi-source academic paper search (arXiv, PubMed, Semantic Scholar, etc.). |
-|| `searxng` | media | [searxng.md](searxng.md) | none | null | Local SearXNG metasearch. Open web + social media search. No key needed. ||
-|| `yahoo_finance` | finance | [yahoo_finance.md](yahoo_finance.md) | none | null | Yahoo Finance MCP. Prices, financials, news, recommendations, options. No key. ||
-|| `rapidapi` | other | [rapidapi.md](rapidapi.md) | rapidapi_key | varies | 203+ APIs via MCP multiplexer. Finance, crypto, news, geo, weather, security, social, travel. General-purpose marketplace — NOT "local business search." ||
-|| `acre_lens` | geo | [acre-lens.md](acre-lens.md) | none | null | AcreLens MCP. US land due-diligence: solar, groundwater, flood zones, building codes, county regulations. No key. ||
-|| `metricduck` | finance | [metricduck.md](metricduck.md) | required | required | MetricDuck MCP. Company fundamentals, screening, comparison. Bearer token via METRICDUCK_API_KEY. Rally Quality/Safety fallback. ||
+| `searxng` | media | [searxng.md](searxng.md) | none | null | Local SearXNG metasearch. Open web + social media search. No key needed. |
+| `yahoo_finance` | finance | [yahoo_finance.md](yahoo_finance.md) | none | null | Yahoo Finance MCP. Prices, financials, news, recommendations, options. No key. |
+| `acre_lens` | geo | [acre-lens.md](acre-lens.md) | none | null | AcreLens MCP. US land due-diligence: solar, groundwater, flood zones, building codes, county regulations. No key. **Connector module not bundled** — queries fail `connector_missing` until `scripts/sources/acre_lens_mcp.py` is restored. |
+| `metricduck` | finance | [metricduck.md](metricduck.md) | required | required | MetricDuck MCP. Company fundamentals, screening, comparison. Bearer token via METRICDUCK_API_KEY. Rally Quality/Safety fallback. **Connector module not bundled** — queries fail `connector_missing` until `scripts/sources/metricduck_mcp.py` is restored. |
+
+**MCP surfaces (not registry entries — call their MCP tools directly):**
+
+| Surface | Category | Reference | Notes |
+|---------|----------|-----------|-------|
+| `rapidapi` | other | [rapidapi.md](../rapidapi.md) | Multiplexer over hundreds of RapidAPI hosts via the host's MCP server. Finance, crypto, news, geo, weather, security, social, travel. General-purpose marketplace — NOT "local business search." Read the host registry for the live host list. |
 
 ---
 
@@ -104,12 +111,12 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | "What is X" / general factual lookup | `wikipedia` summary, then `wikidata` for structured facts |
 | "What's filed by company X" | `sec_edgar` |
 | "Recent news about X" | `gdelt` |
-|| "Papers about X" | `openalex` (breadth) → `semantic_scholar` (curation) |
-|| "Is paper X open access?" | `unpaywall` (check OA status by DOI) |
-|| "Download paper PDF by DOI" | `unpaywall` (legal OA first) → `scihub` (mirror fallback) |
-|| "Get paper PDF" / "sci-hub" | `scihub` |
-|| "Find textbooks on X" | `welib` (books + papers) |
-|| "Biomedical evidence about X" | `pubmed` |
+| "Papers about X" | `openalex` (breadth) → `semantic_scholar` (curation) |
+| "Is paper X open access?" | `unpaywall` (check OA status by DOI) |
+| "Download paper PDF by DOI" | `unpaywall` (legal OA first) → `scihub` (mirror fallback) |
+| "Get paper PDF" / "sci-hub" | `scihub` |
+| "Find textbooks on X" | `welib` (books + papers) |
+| "Biomedical evidence about X" | `pubmed` |
 | "What's the weather / will rain / forecast" | `weather` (brief, conditions, forecast) — US; `weather global` — international |
 | "Any weather alerts / warnings" | `weather alerts` |
 | "Severe weather risk / SPC outlook" | `weather severe` |
@@ -131,7 +138,7 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | "Country facts" | `rest_countries` (basics) or `world_bank` (indicators) |
 | "Book / ISBN" | `open_library` |
 | "NASA / asteroid / rover photo / disaster" | `nasa` |
-| "Satellite imagery layers" / "Earth observation data" | `gibs` (planned -- see discovered-apis.md) |
+| "Satellite imagery layers" / "Earth observation data" | `gibs` layers → tile_url or wms_bbox |
 | "Solar flare / geomagnetic storm / ISS location" | `space_weather` |
 | "US demographics / population / income by area" | `census` |
 | "Environmental compliance / facility violations" | `epa_echo` |
@@ -139,18 +146,18 @@ When the **Account** column says `required`, Reach is authorized to register at 
 | "Nonprofit financials / IRS 990 data" | `nonprofit_explorer` |
 | "Gene info / genome / taxonomy" | `ncbi_datasets` |
 | "US air quality index (official EPA)" | `airnow` |
-| "Currency exchange rates / convert currency" | `exchangerate` |
+| "Currency exchange rates / convert currency" | `exchangerate` (key required — `EXCHANGERATE_KEY`) |
 | "Transit routes / stops / schedules" | `transit_land` |
 | "EV charging stations near X" | `ev_charging` |
 | "Product manual for X" / "How to use X" / "X user manual" | `manualslib` search → read_page |
 | "Random manual page" | `manualslib` read_random |
 | "Satellite imagery of X" / "What does X look like from space" / "Recent imagery of location" | `gibs` layers → tile_url or wms_bbox |
-| "Analyze this land"
-|| "Solar potential for this address" | `acre_lens get_solar_potential` |
-|| "Compare these two parcels" / "which property is better" | `acre_lens compare_properties` |
-|| "How suitable is this land" / "quick land score" | `acre_lens get_land_quick_score` |
-|| "Land regulations in state X" / "state land profile" | `acre_lens get_state_land_profile` |
-|| "What are people saying about X on Reddit" | `reddit` search |
+| "Analyze this land" (parcel-level) | `acre_lens` — see the four rows below |
+| "Solar potential for this address" | `acre_lens get_solar_potential` |
+| "Compare these two parcels" / "which property is better" | `acre_lens compare_properties` |
+| "How suitable is this land" / "quick land score" | `acre_lens get_land_quick_score` |
+| "Land regulations in state X" / "state land profile" | `acre_lens get_state_land_profile` |
+| "What are people saying about X on Reddit" | `reddit` search |
 | "Find papers about X" | `paper_search` search (multi-source) |
 | "Look up person on LinkedIn" | `linkedin` person_profile |
 | "Find employees at company X" | `linkedin` company_employees |

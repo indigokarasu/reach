@@ -9,7 +9,8 @@ Usage:
   python3 property_lookup.py zillow_by_address "<address>"
   python3 property_lookup.py sf_assessor "<address fragment>"
 
-Auth: requires `RT_KEY` env var (set in ~/.hermes/.env).
+Auth: requires `RT_KEY` env var (set in the active profile's .env — not the
+global ~/.hermes/.env, which this process never loads).
 """
 
 import json
@@ -75,7 +76,7 @@ def sf_assessor(fragment):
 def main():
     if not RT_KEY and len(sys.argv) > 1 and sys.argv[1] != "sf_assessor":
         print("Error: RT_KEY environment variable not set.", file=sys.stderr)
-        print("Add to ~/.hermes/.env: RT_KEY=rt_...", file=sys.stderr)
+        print("Add to the active profile's .env (not the global ~/.hermes/.env): RT_KEY=rt_...", file=sys.stderr)
         sys.exit(1)
 
     if len(sys.argv) < 2:

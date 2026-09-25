@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """
-import os
 Reach weather connector — consolidated NWS + SPC + METAR + Open-Meteo.
 
 Wraps the data-tier tools from the hermes-weather-plugin into a single
@@ -20,20 +19,22 @@ All actions are pure Python + requests. No binary/Rust dependencies.
 
 import json
 import logging
+import os
 import sys
 from typing import Optional
 
 try:
     import requests
-except ImportError:
-    print(json.dumps({"error": "requests is required: pip install requests"}), file=sys.stderr)
-    sys.exit(1)
+except ImportError as exc:
+    # Import-safe failure: reach.py converts this into a `connector_missing`
+    # envelope. Exiting here would kill the calling CLI process.
+    raise ImportError("requests is required for the weather connector (pip install requests): %s" % exc)
 
 logger = logging.getLogger(__name__)
 
 _SESSION = requests.Session()
 _SESSION.headers.update({
-    "User-Agent": "ocas-reach/3.0 (os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com"))",
+    "User-Agent": "ocas-reach/3.0 (contact: %s)" % os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com"),
     "Accept": "application/geo+json,application/json",
 })
 _TIMEOUT = 30

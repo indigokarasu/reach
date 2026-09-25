@@ -1,8 +1,8 @@
 # OKRs
 
 ### schedule_adherence
-- **Target**: `reach:update` cron runs within ±1h of scheduled time on ≥95% of days per month.
-- **Measurement**: Compare wall-clock execution timestamps in `evidence.jsonl` against schedule (`0 0 * * *`). Runs outside the ±1h window are misses.
+- **Target**: the `reach:api-mine` cron runs within ±1h of its `0 4 * * *` schedule on ≥95% of days per month.
+- **Measurement**: compare wall-clock api-mine timestamps in `evidence.jsonl` (and its journal) against the schedule; runs outside the ±1h window are misses. `reach.query` runs are demand-driven and excluded — api-mine is the skill's only scheduled job.
 
 ### data_integrity
 - **Target**: Zero silent data loss events per month.

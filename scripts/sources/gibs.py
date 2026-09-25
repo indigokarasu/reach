@@ -70,7 +70,7 @@ def _parse_capabilities(xml_text):
 def _fetch_capabilities():
     """Fetch and cache the WMTS GetCapabilities document."""
     xml = _http.get(CAPABILITIES_URL, headers={
-        "User-Agent": "ocas-reach (contact: os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com"))",
+        "User-Agent": _http.user_agent(),
         "Accept": "application/xml",
     })
     return xml

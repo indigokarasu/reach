@@ -20,14 +20,14 @@ For sources that require a website / project URL, use `https://github.com/<agent
 3. **Submit** with the authorized identity above. If a usage / project description is requested, use the canonical wording in `account_url` rows of the index, or write one or two sentences describing OCAS as a personal AI assistant.
 4. **Verify the account email** if the source sends a confirmation message — check Gmail via the `dispatch` skill or a direct read.
 5. **Capture the issued credential.** Most sources show the API key once on success. Some email it.
-6. **Store the key in `~/.hermes/.env`** under the env var declared in `sources.yml` for that source. One key per line, no quotes:
+6. **Store the key in the active profile's `.env`** — `$HERMES_HOME/.env` (e.g. `~/.hermes/profiles/<profile>/.env`), NOT the global `~/.hermes/.env`, which the profile process never loads. Use the env var declared in `sources.yml` for that source. One key per line, no quotes:
 
    ```
    FRED_KEY=abcdef0123456789abcdef0123456789
    ```
 7. **Append a ledger entry** to `{agent_root}/commons/data/ocas-reach/accounts.json` (see schema below).
 8. **Write an Action Journal** at `{agent_root}/commons/journals/ocas-reach/YYYY-MM-DD/{run_id}.json` describing the registration. Set `kind: action` (not `observation`) — registration is a side effect.
-9. **Notify the user once** by including a single line in the next briefing or status response: "Registered Reach account at <source> (key stored in `~/.hermes/.env`)."
+9. **Notify the user once** by including a single line in the next briefing or status response: "Registered Reach account at <source> (key stored in the active profile's `.env`)."
 10. **Verify the credential works** by issuing one cheap query (`reach.py query <source> <action>` for the lowest-cost action). If the call fails with auth-related status, re-check the env var name + value.
 
 ## Ledger schema
@@ -54,7 +54,7 @@ For sources that require a website / project URL, use `https://github.com/<agent
 Rules:
 
 - **One entry per source.** If a key is rotated, update `key_set_at` and add a `rotated_from` field with the previous timestamp; do not create a duplicate row.
-- **Never put the key value in the ledger.** The ledger records existence and metadata; the secret lives only in `~/.hermes/.env`.
+- **Never put the key value in the ledger.** The ledger records existence and metadata; the secret lives only in the active profile's `.env` (`credential-files.md` explains why the global root silently fails).
 - **`verified_call`** must be set after the post-registration smoke call succeeds. If the smoke call fails, leave it null and surface an error to the user — do not pretend the account is live.
 
 ## What Reach is NOT authorized to do

@@ -15,10 +15,10 @@ Use exchangerate for: currency conversion, historical exchange rate lookups, fin
 
 | | |
 |---|---|
-| Required | none |
-| Account | not needed |
+| Required | `EXCHANGERATE_KEY` (query param `access_key`) |
+| Account | required — free key from https://exchangerate.host/ |
 
-Free tier requires no API key. Paid tiers offer higher rate limits and additional features.
+**Live-verified:** an unkeyed call does NOT fail with an HTTP error — it returns **HTTP 200** with `{"success": false, "error": {"code": 101, "type": "missing_access_key"}}`. Any caller that only checks the HTTP status will read that body as success. Reach injects `access_key` automatically once the env var is set in the active profile's `.env`; until then the source fails explicitly with an `auth_missing` envelope.
 
 ## Limits
 
@@ -86,11 +86,11 @@ python3 scripts/reach.py query exchangerate timeseries '{"start_date": "2024-01-
 
 ## Pitfalls
 
-- **Default base is USD.** Use the `base` parameter to change. Free tier may limit base currency options.
+- **A missing key looks like success.** HTTP 200 + `success: false` + `code 101 missing_access_key`. Check the body's `success` field, not just the status code.
+- **Default base is USD.** Use the `base` parameter to change.
 - **Historical dates must be weekdays.** Weekend/holiday rates may not be available (markets closed).
 - **Rate data is from European Central Bank (ECB).** Updated daily around 4pm CET.
-- **Free tier has limited features.** No key needed but some advanced features (crypto, metals, etc.) may require paid tier.
-- **Complements Alpha Vantage.** Alpha Vantage has forex with 25/day cap; ExchangeRate.host has no documented cap for basic rates.
+- **Complements Alpha Vantage.** Alpha Vantage has forex with a 25/day cap; this source has no documented daily cap once keyed.
 
 ## Source links
 

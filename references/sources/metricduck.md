@@ -55,8 +55,6 @@ Screen companies against fundamentals criteria.
 
 ## Rally Integration
 
-Added as a Quality/Safety fundamentals fallback in `references/market-data-sources.md`:
-
-Degradation chain: **Finnhub → MetricDuck (via Reach MCP) → price-based proxy**.
+Added as a Quality/Safety fundamentals fallback in the Ocas Rally skill, which owns `references/market-data-sources.md` (degradation chain: Finnhub → MetricDuck → price-based proxy). Reach does not bundle that doc.
 
 If Reach/MCP is unavailable, Rally degrades to its existing direct chain without regression.

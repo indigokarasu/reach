@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["pyyaml"]
+# ///
 """
 Reach orchestrator — routes queries to registered sources.
 
@@ -7,14 +11,27 @@ Usage:
   reach.py sources                          # list registered sources
   reach.py source <name>                    # show one source's actions + auth + quota
   reach.py usage [--month YYYY-MM]          # show usage tally per source
+  reach.py --help                           # this text
 
 Auth: each source declares its env var. Missing required auth → exit 1
 with an actionable message. Per-source monthly/daily quotas are enforced
 from {agent_root}/commons/data/ocas-reach/usage.jsonl.
+
+Exit codes: 0 success · 1 source/auth/connector failure · 2 quota exhausted.
 """
+import sys
+
+_HELP_ARGS = {"--help", "-h"}
+# First executable code after the docstring: --help must not depend on PyYAML,
+# the registry, or network state (why: --help is how an agent discovers the CLI
+# on a host where a dependency is missing — a guard placed after an import that
+# can raise turns `--help` into a traceback).
+if set(sys.argv[1:]) & _HELP_ARGS:
+    print((__doc__ or "").strip() or "Usage: python3 reach.py")
+    sys.exit(0)
+
 import json
 import os
-import sys
 import time
 import urllib.parse
 import urllib.request
@@ -23,7 +40,6 @@ import importlib
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from _load_yaml import _load_yaml_min
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -34,12 +50,35 @@ REGISTRY = SCRIPT_DIR / "sources.yml"
 USAGE_LOG = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/data/ocas-reach/usage.jsonl"
 DATA_DIR = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/data/ocas-reach"
 JOURNAL_DIR = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "commons/journals/ocas-reach"
+EVIDENCE_LOG = DATA_DIR / "evidence.jsonl"
 
 USER_AGENT = "ocas-reach (contact: " + os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com") + ")"
+
+# The working credential file is the ACTIVE PROFILE's .env — a key placed in the
+# global ~/.hermes/.env is invisible to this process (why: HERMES_HOME points at
+# the profile root). See references/credential-files.md.
+ENV_FILE_HINT = "the active profile's .env (e.g. ~/.hermes/profiles/<profile>/.env, not the global ~/.hermes/.env)"
 
 # ---------------------------------------------------------------------------
 # Registry access
 # ---------------------------------------------------------------------------
+def _load_yaml_min(text):
+    """Parse registry YAML via the bundled loader (PyYAML imported lazily).
+
+    The import is deferred instead of module-scope: PyYAML is only needed to
+    read `sources.yml`, and a module-scope import would make `--help`, `sources`
+    and `usage` fail on a host where PyYAML is missing.
+    """
+    try:
+        from _load_yaml import _load_yaml_min as loader
+    except ImportError as exc:
+        raise SystemExit(
+            "reach.py: cannot parse scripts/sources.yml — PyYAML is missing or "
+            "not importable from %s (pip install pyyaml): %s" % (sys.executable, exc)
+        )
+    return loader(text)
+
+
 def load_registry():
     if not REGISTRY.exists():
         return {"sources": {}}
@@ -60,20 +99,41 @@ def get_source(registry, name):
 # ---------------------------------------------------------------------------
 # Auth resolution
 # ---------------------------------------------------------------------------
+class AuthMissing(Exception):
+    """Raised when a source requires a credential the host does not provide.
+
+    Raised instead of exiting so cmd_query can log an `auth_missing` usage row
+    and journal entry — the outcome the recovery contract and OKRs assume
+    exists (a bare exit would make the failed run invisible).
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+
+
 def resolve_auth(source):
     auth = source.get("auth", "none")
     if auth in (None, "none"):
         return None
     env_var = source.get("env_var")
     if not env_var:
+        if auth == "required":
+            # A required-auth source with no env_var would otherwise dispatch
+            # unauthenticated and fail upstream with a confusing 401 — fail here
+            # with a fix that names the actual defect (the registry entry).
+            raise AuthMissing(
+                "Registry defect for %s: auth: required but no env_var declared. "
+                "Add the environment variable to its entry in scripts/sources.yml "
+                "(see references/source-integration-workflow.md step 8)." % source.get("name", "?")
+            )
         return None
     val = os.environ.get(env_var)
     if not val and auth == "required":
-        msg = f"Auth required for {source.get('name', '?')}: set {env_var} in ~/.hermes/.env"
+        msg = f"Auth required for {source.get('name', '?')}: set {env_var} in {ENV_FILE_HINT}"
         if source.get("account_url"):
             msg += f"\nRegister an account at: {source['account_url']}"
-        print(msg, file=sys.stderr)
-        sys.exit(1)
+        raise AuthMissing(msg)
     return val
 
 
@@ -241,6 +301,33 @@ def _ensure_dirs():
     JOURNAL_DIR.mkdir(parents=True, exist_ok=True)
 
 
+# Statuses where no call reached the source — the recovery contract requires a
+# not_activity_reason for runs with no external effect (references/okrs.md).
+_NO_CALL_STATUSES = {"quota_blocked", "auth_missing", "invalid_request"}
+
+
+def log_evidence(source_name, action, status, extra=None):
+    """Append a recovery-contract evidence row for every run, no-ops included.
+
+    Why: gap detection compares consecutive rows, so a run that left no row is
+    indistinguishable from a run that never happened.
+    """
+    _ensure_dirs()
+    row = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "skill": "ocas-reach",
+        "source": source_name,
+        "action": action,
+        "status": status,
+    }
+    if status in _NO_CALL_STATUSES:
+        row["not_activity_reason"] = "no call reached the source (%s)" % status
+    if extra:
+        row.update(extra)
+    with EVIDENCE_LOG.open("a") as f:
+        f.write(json.dumps(row) + "\n")
+
+
 def log_usage(source_name, action, status, extra=None):
     _ensure_dirs()
     row = {
@@ -253,6 +340,7 @@ def log_usage(source_name, action, status, extra=None):
         row.update(extra)
     with USAGE_LOG.open("a") as f:
         f.write(json.dumps(row) + "\n")
+    log_evidence(source_name, action, status, extra)
 
 
 def write_journal(source_name, action, params, result, outcome):
@@ -283,8 +371,50 @@ def write_journal(source_name, action, params, result, outcome):
 
 
 # ---------------------------------------------------------------------------
+# Connector loading
+# ---------------------------------------------------------------------------
+def _import_connector(name):
+    """Import `scripts/sources/<name>.py`, adding the package dir on first use.
+
+    Raises ImportError when the module (or something it imports) is missing, so
+    the caller can return an actionable envelope instead of a traceback.
+    """
+    try:
+        return importlib.import_module(f"sources.{name}")
+    except ImportError:
+        sys.path.insert(0, str(SCRIPT_DIR))
+        return importlib.import_module(f"sources.{name}")
+
+
+# ---------------------------------------------------------------------------
 # Top-level commands
 # ---------------------------------------------------------------------------
+def _run_source(call):
+    """Run a connector/generic-dispatch call, turning refusals into envelopes.
+
+    Why: pre-flight refusals (unknown action, missing path param) used to raise
+    SystemExit straight out of the process, which skipped the usage row and
+    journal entry — the failed run became invisible to the recovery audit.
+    """
+    try:
+        return {"ok": True, "data": call()}
+    except SystemExit as exc:
+        if not isinstance(exc.code, str):
+            raise
+        return {
+            "ok": False,
+            "error": "invalid_request",
+            "message": exc.code,
+            "actionable_guidance": (
+                "Fix the request and retry: check the action name with "
+                "`python3 scripts/reach.py source <name>` and that params_json "
+                "matches the params documented in references/sources/<name>.md."
+            ),
+        }
+    except Exception as e:
+        return {"ok": False, "error": "source_error", "message": str(e)}
+
+
 def cmd_query(source_name, action_name, params):
     registry = load_registry()
     source = get_source(registry, source_name)
@@ -306,22 +436,55 @@ def cmd_query(source_name, action_name, params):
         print(json.dumps(envelope, indent=2))
         return 2
 
-    auth_value = resolve_auth(source)
+    try:
+        auth_value = resolve_auth(source)
+    except AuthMissing as exc:
+        envelope = {
+            "ok": False,
+            "error": "auth_missing",
+            "source": source_name,
+            "action": action_name,
+            "message": exc.message,
+            "actionable_guidance": (
+                "Set the source's env_var in %s, then retry. Registering an "
+                "account is allowed where `account:` is required/optional — see "
+                "references/account_provisioning.md." % ENV_FILE_HINT
+            ),
+        }
+        log_usage(source_name, action_name, "auth_missing", {})
+        write_journal(source_name, action_name, params, envelope, "auth_missing")
+        print(json.dumps(envelope, indent=2, default=str))
+        return 1
 
     # Custom module override
     if source.get("custom"):
         try:
-            mod = importlib.import_module(f"sources.{source['custom']}")
-        except ImportError:
-            sys.path.insert(0, str(SKILL_DIR / "scripts"))
-            mod = importlib.import_module(f"sources.{source['custom']}")
-        try:
-            data = mod.query(action_name, params or {}, {"value": auth_value, "user_agent": USER_AGENT})
-            result = {"ok": True, "data": data}
-        except Exception as e:
-            result = {"ok": False, "error": "source_error", "message": str(e), "source": source_name, "action": action_name}
+            mod = _import_connector(source["custom"])
+        except ImportError as exc:
+            # The registry promises a connector the package does not ship (or a
+            # dependency of it is absent). Fail with an envelope, not a traceback,
+            # and never fall through to another source.
+            result = {
+                "ok": False,
+                "error": "connector_missing",
+                "source": source_name,
+                "action": action_name,
+                "message": "connector module sources/%s.py unavailable: %s" % (source["custom"], exc),
+                "actionable_guidance": (
+                    "sources.yml declares `custom: %s` for this source but "
+                    "scripts/sources/%s.py is missing from the package (or one of its "
+                    "imports fails). Restore the connector module, or drop the `custom:` "
+                    "field to use generic action dispatch when the entry defines "
+                    "`base_url` + `actions`." % (source["custom"], source["custom"])
+                ),
+            }
+        else:
+            result = _run_source(lambda: mod.query(action_name, params or {}, {"value": auth_value, "user_agent": USER_AGENT}))
     else:
-        result = dispatch_generic(source, action_name, params or {}, auth_value)
+        result = _run_source(lambda: dispatch_generic(source, action_name, params or {}, auth_value))
+
+    result.setdefault("source", source_name)
+    result.setdefault("action", action_name)
 
     outcome = "success" if result.get("ok") else result.get("error", "error")
     log_usage(source_name, action_name, outcome, {"http_status": result.get("status")})

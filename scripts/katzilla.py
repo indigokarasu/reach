@@ -91,7 +91,7 @@ def mock_action(agent_id, action_id, params=None):
 def main():
     if not KZ_KEY:
         print("Error: KZ_KEY environment variable not set.")
-        print("Add to ~/.hermes/.env: KZ_KEY=kz_live_...")
+        print("Add to the active profile's .env (not the global ~/.hermes/.env): KZ_KEY=kz_live_...")
         sys.exit(1)
 
     if len(sys.argv) < 2:

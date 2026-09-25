@@ -8,7 +8,7 @@ ENTITY = "https://www.wikidata.org/wiki/Special:EntityData"
 
 def _headers(auth):
     return {
-        "User-Agent": auth.get("user_agent", "ocas-reach (contact: os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com"))"),
+        "User-Agent": auth.get("user_agent") or _http.user_agent(),
         "Accept": "application/sparql-results+json",
     }
 

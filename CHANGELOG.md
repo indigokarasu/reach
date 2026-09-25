@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.13.0] - 2026-09-25
+
+### Fixed — scripts that could not run, and registry entries that lied
+
+- **Five connector modules were syntactically broken** (`gibs`, `sec_edgar`, `unpaywall`, `weather`, `wikidata_sparql`): a sanitizer pass had nested an `os.environ.get(...)` expression *inside* a string literal, so `py_compile` failed and every one of those sources was dead. The User-Agent string now comes from one shared helper (`scripts/sources/_http.py:user_agent()`), `weather.py`'s docstring no longer swallows its `import os`, and `weather.py` raises `ImportError` on a missing `requests` instead of exiting the calling process.
+- **`reach.py --help` printed the wrong docstring** — the `_load_yaml` import ran before the help guard. The guard is now the first executable code after the docstring, and `_load_yaml.py`'s guard is `__main__`-scoped so importing it never hijacks `argv`. Without PyYAML installed, `reach.py` now fails with one actionable line instead of a traceback (PEP 723 metadata declares the dependency).
+- **`exchangerate` was declared `auth: none`** while the endpoint required an access key — and an unkeyed call answers HTTP 200 with `success: false`. The entry now declares `EXCHANGERATE_KEY` + `auth_param: access_key`, so an unset key fails explicitly as `auth_missing` instead of returning an empty-looking rate table. `linkedin` (auth: required, no `env_var`) got an explicit `env_var`, and `resolve_auth` now refuses a required-auth entry that declares no env var.
+- **Registry promises the package cannot keep** — `acre_lens` and `metricduck` reference connector modules that are not bundled; queries now return a `connector_missing` envelope with restore instructions instead of a traceback.
+- **Phantom and stale references** — dropped `scripts/update.sh` (removed with the in-skill updater), re-attributed two cross-skill paths (`ocas-voyage`'s `letsfg.md`, `ocas-rally`'s `market-data-sources.md`) to the skills that own them, corrected RapidAPI's host-registry paths to their host locations, fixed a broken `rapidapi.md` link in the source index, and normalised the malformed `||` table rows in `references/sources/index.md`.
+- **Credential documentation contradicted itself**: three files told the reader to store keys in the global `~/.hermes/.env`, which the profile process never loads. All now point at the active profile's `.env`, matching `credential-files.md`.
+
+### Added
+
+- **Test suite** (`tests/test_reach.py`, stdlib `unittest`, fully offline): registry well-formedness, index coverage, `--help` smoke on every read-only CLI, actionable `auth_missing` / `connector_missing` envelopes, the missing-PyYAML error path, no PII or absolute host paths in a public package, and no phantom `references/` paths or broken relative links.
+- **CI** (`.github/workflows/ci.yml`): `py_compile` over every script plus the test suite.
+- `references/gotchas.md` § Provenance — the dated evidence behind the routing rules, kept out of SKILL.md.
+
+### Changed
+
+- **No in-skill updater.** The `reach:update` cron / `scripts/update.sh` mechanism is gone — fleet updates run through `skills:update-fleet`. SKILL.md, `references/okrs.md` and the support-file index no longer describe it (they were still promising it).
+- SKILL.md compressed to a pointer-heavy overview (224 lines, no time-sensitive dates in the instructions); journal/evidence/compaction behaviour, defaults and exit codes now documented where the reader needs them.
+
 ## [3.12.0] - 2026-09-16
 
 ### Changed

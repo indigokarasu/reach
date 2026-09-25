@@ -1,6 +1,6 @@
 # RapidAPI
 
-MCP multiplexer that provides access to 203+ RapidAPI-hosted APIs through a single connection.
+MCP multiplexer that provides access to hundreds of RapidAPI-hosted APIs through a single connection. The host registry (below) is the live list — treat any count quoted in older notes as a snapshot, not a fact.
 
 ## Endpoint
 
@@ -12,7 +12,7 @@ RapidAPI key (configured in the MCP server). No per-API auth needed — the key 
 
 ## Registry
 
-Available APIs: `scripts/references/rapidapi-hosts-registry.json` (203 hosts)
+Available APIs: the **host-side** registry at `<hermes-home>/scripts/references/rapidapi-hosts-registry.json` — a host file, not bundled in this skill package. Read it for the live host list instead of trusting a count here.
 
 Key categories:
 - **Finance**: alpha-vantage, yahoo-finance, polygon, finnhub, tiingo, eodhistoricaldata, marketstack, intrinio, financialmodelingprep
@@ -43,8 +43,8 @@ Varies per underlying API. Most RapidAPI free tiers are 100-500 calls/day. The M
 ## Notes
 
 - The MCP server discovers available endpoints from config.yaml at runtime
-- Semantic index at `scripts/references/rapidapi-semantic-index.json`
-- To reindex: run `python3 scripts/rapidapi-reindex.py`
+- Semantic index (host-side, not bundled): `<hermes-home>/scripts/references/rapidapi-semantic-index.json`
+- To reindex: run `python3 scripts/rapidapi-reindex.py` on the host
 - The old `google-search-master-mega` Sift fallback should now route through this source
 
-**Important (Jun 12, 2026)**: RapidAPI is a GENERAL-PURPOSE marketplace (203 endpoints). NOT "local business search." When a skill uses a narrow slice of a tool, don't let that define the tool for all skills. Always check canonical source/definition of a multi-skill shared tool.
+**Why this is general-purpose**: RapidAPI is a marketplace of hundreds of third-party APIs, NOT "local business search." A skill that uses one narrow slice (Sift's old Google Search fallback) must not define the tool for every other skill — on a shared tool, check the canonical definition before narrowing it.

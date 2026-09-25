@@ -1497,27 +1497,35 @@ sources:
   exchangerate:
     category: finance
     reference: exchangerate.md
-    auth: none
-    account: null
+    # Live-verified: an unkeyed /latest call returns HTTP 200 with
+    # success:false / code 101 missing_access_key — the entry used to say auth: none.
+    auth: required
+    env_var: EXCHANGERATE_KEY
+    account: required
+    account_url: https://exchangerate.host/
     base_url: https://api.exchangerate.host
-    rate: no published cap; throttle to <1/sec
+    rate: throttle to <1/sec
     actions:
       latest:
         method: GET
         path: /latest
         params_in: query
+        auth_param: access_key
       historical:
         method: GET
         path: /{date}
         params_in: path
+        auth_param: access_key
       convert:
         method: GET
         path: /convert
         params_in: query
+        auth_param: access_key
       timeseries:
         method: GET
         path: /timeseries
         params_in: query
+        auth_param: access_key
 
   # ============================================================
   # GEO + TRANSIT (no key) — batch 2
@@ -1646,6 +1654,7 @@ sources:
     category: media
     reference: linkedin.md
     auth: required
+    env_var: LINKEDIN_USER_DATA_DIR
     account: required
     account_url: https://www.linkedin.com
     custom: linkedin_mcp

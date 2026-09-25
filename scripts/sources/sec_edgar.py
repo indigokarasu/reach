@@ -8,7 +8,7 @@ TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 
 def _headers(auth):
     # SEC rejects requests without a real User-Agent identifying caller.
-    return {"User-Agent": auth.get("user_agent", "ocas-reach (contact: os.environ.get("OCAS_AGENT_EMAIL", "agent@example.com"))")}
+    return {"User-Agent": auth.get("user_agent") or _http.user_agent()}
 
 
 def _pad_cik(cik):

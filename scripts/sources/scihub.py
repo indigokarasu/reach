@@ -20,15 +20,23 @@ import re
 import socket
 import time
 import logging
-import urllib3
 import urllib.request
 import urllib.parse
 import urllib.error
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+try:
+    # Optional: used only to silence the InsecureRequestWarning raised by the
+    # verify=False mirror calls below. A host without urllib3 still runs the
+    # connector (stdlib urllib handles every request).
+    import urllib3
+except ImportError:  # pragma: no cover - host without urllib3
+    urllib3 = None
+
 logger = logging.getLogger("ocas-reach.scihub")
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+if urllib3 is not None:
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ── Mirror Registry ──────────────────────────────────────────────────────────
 # Ordered by priority. First working mirror is used and cached.
@@ -151,6 +159,10 @@ def _fetch_url(url: str, timeout: int = 30) -> bytes:
     req = urllib.request.Request(url, headers=headers)
     try:
         import ssl
+        # Sci-Hub mirrors routinely serve expired/self-signed certificates. This
+        # connector is read-only and only fetches public paper PDFs, so TLS
+        # verification is relaxed deliberately — do NOT copy this pattern into
+        # API sources that carry credentials.
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
