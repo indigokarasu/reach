@@ -458,6 +458,77 @@ _All other discovered APIs have been moved to the Registry above. This section w
 - **Verdict**: Confirmed working + deployed and health-checked 2026-09-11 (container healthy, reaches slskd API 200). Integrated into the personal music-library workflow (GDrive album list → MBID resolve → queue FLAC downloads). Self-hosted/instance-scoped, so it belongs as a skill-integrated connector (like LetsFG/HotelsByDay) rather than a shared Reach world-data source.
 - **Source session**: `20260911_004332_793d948d`, `20260911_020506_ebd047`
 
+### Recruiting & Job Postings
+
+No ATS source is registered in `sources.yml` (61 sources; only `linkedin` touches hiring), yet
+`util-headhunter` — an active Mon/Wed/Fri cron — does its Step-3 discovery by SearXNG plus
+scraping individual career pages. ATS boards expose a first-class public JSON API for exactly
+that data. Three verified 2026-09-27; deduplicated against `sources/index.md` and this file.
+
+#### Greenhouse Job Board API
+- **Endpoint**: `https://boards-api.greenhouse.io/v1/boards/{board_token}/jobs` (list) and
+  `https://boards-api.greenhouse.io/v1/boards/{board_token}/jobs/{id}` (detail, adds full posting)
+- **Data**: Every open posting on a company's board. List entries carry `id`, `title`,
+  `location.name`, `company_name`, `absolute_url` (direct apply link), `updated_at`,
+  `first_published`, `application_deadline`, `metadata`. The detail endpoint adds `content`
+  (full posting HTML, 4.7KB observed), plus `departments`, `offices`, `data_compliance`.
+- **Access**: **None required.** No key, no account, no signup. Public per-company board.
+- **Rate limits**: None published. Response is `ETag`-tagged with `x-cache` — send
+  `If-None-Match` and a matching response is a cheap 304. Poll boards on a schedule, not in a loop.
+- **Quality**: Primary source — the employer's own ATS, not an aggregator. Titles and locations
+  are exact strings, so the skill's free-text `salary_display` / "never parse for arithmetic"
+  rule stays intact.
+- **Verified**: Live 2026-09-27. 200 OK, 0.07–0.1s. 24 boards scanned: figma 163 jobs,
+  databricks 887, stripe 701, datadog 449, mongodb 396, elastic 384, scaleai 203, coinbase 210,
+  vercel 88, airbnb 159. A 404 means "no such board token" (notion, linear, stripe-on-ashby etc.
+  use other ATSes) — it is **not** an error to retry. Detail endpoint confirmed returning
+  4,679 chars of inline `content`.
+- **Notes**: Replaces SearXNG `site:` sweeps and career-page scraping for the discovery step.
+  Suggested Reach actions: `boards` (list tokens), `list_jobs` (`board`, optional `?updated_at`
+  since-filter for incremental runs), `get_job` (`board`, `id` → full text).
+  Consumer: `util-headhunter` Step 3/4. Complements the existing `linkedin` source, which covers
+  people/recruiter lookup rather than postings.
+
+#### Ashby Public Postings API
+- **Endpoint**: `https://api.ashbyhq.com/posting-api/job-board/{name}` — no auth, single
+  unparameterised call returns the whole board.
+- **Data**: Each job carries `id`, `title`, `location`, `address`, `secondaryLocations`,
+  `department`, `team`, `employmentType`, `workplaceType`, `isRemote`, `publishedAt`, `applyUrl`,
+  `jobUrl`, and — importantly — **`descriptionHtml` + `descriptionPlain` inline** (7,887 and
+  19,126 chars observed). No second request needed to read a posting.
+- **Access**: **None required.**
+- **Rate limits**: None published; `cache-control: public, max-age=60, stale-while-revalidate=60`
+  with an `ETag` — a 60s-cadence sweep costs one origin hit per board.
+- **Quality**: Primary source. `department`/`team` give a clean, machine-filterable signal for
+  product/design orgs — better than inferring function from a title string.
+- **Verified**: Live 2026-09-27. 200 OK, 0.02–0.2s. openai 830 jobs, ramp 158, notion 128,
+  whoop 159, ashby 66, linear 30, attio 42. Some boards return 200 with `jobs: []` (vercel,
+  mercury, deel) — an empty board is a valid state, not a failure. 404 = wrong slug
+  (figma, anthropic, stripe, robinhood are not on Ashby).
+- **Notes**: The ATS of choice for the design-forward companies on the headhunter target list
+  (Linear, Notion, Ramp, Ashby itself), i.e. exactly the Tier-2/Tier-4 companies the skill
+  otherwise has to scrape. Suggested Reach actions: `list_jobs` (`name`, optional
+  `isListed`/`department` filter), `get_job` (`name`, `id`). Consumer: `util-headhunter`.
+
+#### Lever Postings API — LIVE but verify the board token
+- **Endpoint**: `https://api.lever.co/v0/postings/{company}?mode=json` (path unchanged; see
+  official `lever/postings-api` repo). Single call returns the full posting list with
+  `additionalPlain` description text inline.
+- **Access**: **None required.**
+- **Verified**: Live 2026-09-27. `https://api.lever.co/v0/postings/leverdemo?mode=json` → **200
+  with a real JSON array**, confirming the endpoint and path are current. Every real-company
+  token tried (figma, databricks, notion, vercel, linear, pinterest, coinbase, robinhood, mongodb,
+  openai, plaid) returned 404 — those firms have **migrated off Lever to other ATSes**, which is
+  a 404-on-`{company}` *token* miss, not a dead API. `robots.txt` is permissive (`Crawl-delay: 1`).
+  Do not record this source as dead on the strength of token 404s alone.
+- **Rate limits**: None published for the public postings endpoint.
+- **Quality**: Same primary-source benefits as the other two; `categories.team` /
+  `categories.location` give the same org filter as Ashby's `department`.
+- **Notes**: Lower priority than Greenhouse/Ashby for this particular target list, because so
+  few of Jared's target companies still run on Lever. Worth registering only as a third-fallback
+  ATS so a company that *does* run Lever is never silently missed. Suggested actions:
+  `list_postings` (`company`).
+
 ### Travel & Lodging
 | Data | Best Source | Alternatives | Notes |
 |------|-------------|--------------|-------|
