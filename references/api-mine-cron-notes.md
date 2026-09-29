@@ -98,6 +98,40 @@ tools they drive**, and those workflows are the lead worth mining. Two paths tha
 A paused or `enabled: true / paused: true` job still counts: the workflow stays a consumer even
 while its schedule is off.
 
+## A negative claim needs a control, and a uniform failure is a different fact than a selective one (2026-09-28)
+
+Two probes this run returned "the API is dead" and were both wrong. What separated them was
+whether a **control** request was run in the same pass:
+
+- **Workday**: every path variant returned the same `HTTP_400` with a structured
+  `{"errorCode":"HTTP_400","errorCaseId":...,"message":""}`. A wrong *path* fails
+  **differentially** (404/406); a wrong *verb* fails **uniformly**, because the router rejects
+  the request before resolving the resource. A deliberately-bogus control path returned 400
+  alongside the real paths — which is the tell that the address was never the variable. The
+  list call is **POST with a JSON body**, not GET; once switched, the same URL returned
+  `total: 1169`. Four passes had already written off a live, no-auth, high-value source.
+- **Host pattern**: the obvious `<tenant>.myworkday.com` resolves and 404s. The real public
+  careers host is `<tenant>.wd<N>.myworkdayjobs.com`. Two of the three candidate hosts probed
+  this way failed DNS outright, which looks identical to "no such company uses this ATS."
+
+**Rules this earned:**
+
+1. **A connection failure with no HTTP status is not a negative result.** The first Workday
+   probe printed `HTTP None` for every URL and I could not tell a dead API from a broken client
+   — the exception text was being swallowed. A probe that cannot print *why* it failed must
+   return a status of its own, or it does not get to make a claim about the world.
+2. **Probe the transport layer separately from the application layer** (DNS → TCP → TLS → HTTP).
+   A layered `getaddrinfo` failure and an HTTP 500 are not the same finding, and conflating them
+   produces exactly the "source is dead" entry that a later run has to disprove.
+3. **Before writing any negative claim, re-read the vendor's own documentation** for the request
+   shape. The `errorCaseId` in the response body is vendor-specific and worth parsing — a blank
+   `message` with a populated `errorCode` reads as "server refused" when it actually means
+   "wrong method."
+4. **Recover real URLs from the corpus, not from memory or guessing.** The Workday host pattern
+   was recovered by regexing the actual `myworkday*` hostnames out of recent session
+   transcripts (`roche.wd3.myworkdayjobs.com` ×27) rather than by constructing candidates.
+   Session text is ground truth about what the system actually talks to; a guess is not.
+
 ## Operational Checklist
 
 After each cron run:

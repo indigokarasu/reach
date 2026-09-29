@@ -51,6 +51,13 @@ _Lookup by what data you need. Cross-references the main source index._
 | Historic US newspapers | Chronicling America API | Newspapers.com (no API, subscription) | 23M+ pages, 1790-1963, free, no auth |
 | Book metadata & search | Google Books API | OpenLibrary API | Both free; Google has better snippet previews |
 | Book metadata (open) | OpenLibrary API | Google Books API | Internet Archive project, fully open data |
+| Album cover art | Cover Art Archive API | — | Peer-reviewed, CC0 metadata, no auth, no rate limit. Pairs with MusicBrainz (below) |
+
+### Music & Audio
+| Data | Best Source | Alternatives | Notes |
+|------|-------------|--------------|-------|
+| Music metadata / identifiers | MusicBrainz API | — | MBID backbone; ~1 req/sec, descriptive UA required |
+| Album cover art | Cover Art Archive API | — | Returns the picture MusicBrainz's MBID points at |
 
 ### Standards & RFC
 | Data | Best Source | Alternatives | Notes |
@@ -451,6 +458,42 @@ _All other discovered APIs have been moved to the Registry above. This section w
 - **Notes**: Complements existing `openalex`/`arxiv` scholarly sources for a factual music-metadata domain. Candidate consumer skills: ocas-haiku (music content), ocas-sift (music research), ocas-reach (music fact lookup), ocas-voyage (venue/event context). No existing source in `sources.yml` covers music metadata. Initial Reach actions: `search` (per entity type: artist/release/release-group/recording/work/label), `get_entity` by MBID, `browse` with `inc` links. Mandatory descriptive User-Agent; throttle to ~1/sec.
 - **Source session**: `20260911_020506_ebd047` (and `20260911_004332_793d948d` DroppedNeedle setup)
 
+#### Cover Art Archive API
+- **Endpoint**: `https://coverartarchive.org/release-group/{mbid}`, `.../release/{mbid}`,
+  `.../artist/{mbid}`, `.../release/{mbid}/{id}` (a specific image),
+  `.../release-group/{mbid}/front-{size}` (direct image bytes; sizes 250/500/1200/…),
+  `.../release/{mbid}/front`, and `/release-group/{mbid}` with `?fmt=json`
+- **Docs**: `https://musicbrainz.org/doc/Cover_Art_Archive/API`
+- **Data**: JSON metadata describing the cover art for a release / release-group / artist:
+  `images[]`, each with `types` (e.g. `Front`, `Back`, `Booklet`, `Medium`, `Liner`,
+  `Spine`, `Track`, `Composer`, `Other`), `image` (full-size URL), `thumb` (small), `front`,
+  `back`, `edit` (a revision number), `approved`, `comment`, `id`. Append a size segment to any
+  entity URL to fetch a resized JPEG directly instead of the JSON.
+- **Access**: **None required.** No key, no account.
+- **Rate limits**: **None in place** — the official docs state plainly "There are currently no
+  rate limiting rules in place at coverartarchive.org." Do not abuse that: the service is
+  volunteer-run on donated hardware and the real cost is other people's latency.
+- **Quality**: Joint Internet Archive / MusicBrainz project. Art is community-curated and
+  **peer-reviewed**, which is the point — a `Front` image here is a specific, approved
+  edition's artwork, not a scraped storefront thumbnail. CC0 for the metadata.
+- **Verified**: Live 2026-09-28 from this host. Resolved MusicBrainz release-group
+  `f9eab5ff-6eb5-4c4e-9136-afbbc491f7cb` (Lykke Li, *Wounded Rhymes*) →
+  `GET /release-group/{mbid}` = **200**, 1 image, `types: ["Front"]`, full-size URL
+  `.../release/cc73731a-.../39242083203.jpg`; `/release-group/{mbid}/front-1200` = **200**,
+  a valid 308KB JPEG. Note `thumb` came back `None` on this record — a null thumb is a real
+  state, not a failed read, so don't treat it as an error.
+- **Notes**: The natural companion to the MusicBrainz entry above, and the missing half of it:
+  MusicBrainz returns the MBID, the Cover Art Archive returns the picture. Directly relevant to
+  the active DroppedNeedle library workflow, which was already proxying coverartarchive.org
+  through nginx and logging "cover art archive requests are saturating the single uvicorn
+  worker" — an existing consumer with a real scaling constraint. Suggested Reach actions:
+  `get_cover_art` (`mbid`, optional `type`/`size`), `list_images` (`mbid`). Reached via MBID
+  resolved from MusicBrainz; requires the same descriptive User-Agent convention and the same
+  ~1/sec discipline as MusicBrainz, since they share an origin (`musicbrainz.org` and
+  `coverartarchive.org` both resolved to `142.132.241.153` this run).
+- **Source session**: `20260911_231021_82acd0f5` (DroppedNeedle cover-download queue)
+
+
 #### DroppedNeedle REST API (self-hosted service)
 - **Endpoint**: `/api/v1` on the deployed instance (`tunes.indigokarasu.com`); OpenAPI spec at `/openapi.json` on the same instance
 - **Access**: Self-hosted Docker service (port 8688), behind nginx basic-auth + app login on `tunes.indigokarasu.com`; has an API key for the slskd backend integration. Uri is instance-specific — not a public shared API.
@@ -463,7 +506,9 @@ _All other discovered APIs have been moved to the Registry above. This section w
 No ATS source is registered in `sources.yml` (61 sources; only `linkedin` touches hiring), yet
 `util-headhunter` — an active Mon/Wed/Fri cron — does its Step-3 discovery by SearXNG plus
 scraping individual career pages. ATS boards expose a first-class public JSON API for exactly
-that data. Three verified 2026-09-27; deduplicated against `sources/index.md` and this file.
+that data. Four verified (2026-09-27 for the first three, 2026-09-28 for Workday);
+deduplicated against `sources/index.md` and this file. **Registration remains the open gap** —
+these four are cataloged here, none is in `sources.yml` yet.
 
 #### Greenhouse Job Board API
 - **Endpoint**: `https://boards-api.greenhouse.io/v1/boards/{board_token}/jobs` (list) and
@@ -528,6 +573,46 @@ that data. Three verified 2026-09-27; deduplicated against `sources/index.md` an
   few of Jared's target companies still run on Lever. Worth registering only as a third-fallback
   ATS so a company that *does* run Lever is never silently missed. Suggested actions:
   `list_postings` (`company`).
+
+#### Workday CxS careers API — the fourth major ATS, and the list call is POST not GET
+- **Endpoint**: `https://<tenant>.wd<N>.myworkdayjobs.com/wday/cxs/<tenant>/<siteId>/jobs`
+  — **POST**, `Content-Type: application/json`, body
+  `{"appliedFacets": {}, "limit": 20, "offset": 0, "searchText": ""}`.
+  Detail: `GET {base}{externalPath}` (note: **detail is GET while list is POST**).
+- **Access**: **None required.** No key, no account, no signup. Same property that makes
+  Greenhouse/Ashby/Lever catalogable.
+- **Data**: `total`, `jobPostings[]` with `title`, `externalPath`, `timeType`,
+  `locationsText`, `postedOn`, `bulletFields`; plus `facets[]` = `timeType` (Full/Part-time),
+  `workerSubType` (9 values), `jobFamilyGroup` (22 values), `locationMainGroup`. Detail returns
+  `jobPostingInfo` (14+ fields incl. `jobDescription`, `jobReqId`, `startDate`, `canApply`,
+  `country`), `hiringOrganization`, `similarJobs`, `userAuthenticated`. `searchText` and
+  `appliedFacets` both genuinely filter (verified: `searchText:"director"` → 45 of 1169;
+  a nonsense term → 0).
+- **Rate limits**: None published. Responses are `cache-control: no-store, no-cache` — treat
+  every call as an origin hit; poll on a schedule.
+- **Quality**: Primary source. The `jobFamilyGroup` facet (22 values) is a cleaner
+  function/org filter than parsing a title string, and it is machine-readable where
+  Greenhouse's is not.
+- **Verified**: Live 2026-09-28. roche `total=1169` (20 returned, 4 facet groups);
+  nvidia `NVIDIAExternalCareerSite` `total=2000`. Detail endpoint 200 with a 2,482-char
+  `jobDescription`.
+- **Host + site discovery is the hard part, and the obvious host is wrong**: public careers
+  boards are `<tenant>.wd<N>.myworkdayjobs.com` — **not** `<tenant>.myworkday.com` (that is
+  the post-login tenant app host; it resolves and 404s, which reads like a dead API). Recover
+  the real `tenant` and `siteId` from the careers landing page's inline `window.workday` bootdata
+  (`tenant: "roche"`, `siteId: "roche-ext"`); the `token` in that block is **not** needed for
+  CxS (verified: adding it as a bearer header changed nothing). `wdN.myworkdayjobs.com` as a
+  bare host fails TLS with a hostname-mismatch certificate, and `ffive.wd5.myworkdayjobs.com`
+  serves a `community.workday.com/invalid-url` stub — so validate the site slug from bootdata
+  rather than guessing. Wrong siteId → `errorCode: S21` / HTTP 404.
+- **Notes**: Completes ATS coverage for `util-headhunter` — Roche, NVIDIA, JPMorgan-class
+  employers run Workday, and Step 3 discovery is currently SearXNG + career-page scraping.
+  Suggested Reach actions: `list_jobs` (`tenant`, `site`, `searchText`, `limit`, `offset`,
+  optional `appliedFacets`), `get_job` (`tenant`, `site`, `external_path`),
+  `list_facets` (`tenant`, `site`). A connector should fetch bootdata to resolve
+  host/siteId rather than taking them as caller-supplied strings.
+- **Source session**: `20260926_112734` (Workday candidate-account mail in the triage window)
+
 
 ### Travel & Lodging
 | Data | Best Source | Alternatives | Notes |
