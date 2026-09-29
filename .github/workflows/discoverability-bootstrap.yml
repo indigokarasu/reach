@@ -1,21 +1,19 @@
 name: Repository discoverability bootstrap
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
+    paths:
+      - .github/workflows/discoverability-bootstrap.yml
 permissions:
   contents: write
   issues: write
 jobs:
-  metadata:
+  discoverability:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
     steps:
-      - name: Repository description and topics
-        run: |
-          gh api --method PATCH "repos/$REPO" -f description='Reach: real-time world-data query engine — stock prices, weather, news, and live data on demand.'
-          gh api --method PUT "repos/$REPO/topics" -H "Accept: application/vnd.github+json" -F 'names[]=agent-skills' -F 'names[]=ai-agent' -F 'names[]=claude' -F 'names[]=news' -F 'names[]=ocas' -F 'names[]=openclaw' -F 'names[]=real-time-data' -F 'names[]=stocks' -F 'names[]=weather'
       - name: Standard labels
         continue-on-error: true
         run: |
