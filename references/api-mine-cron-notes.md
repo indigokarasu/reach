@@ -132,6 +132,109 @@ whether a **control** request was run in the same pass:
    transcripts (`roche.wd3.myworkdayjobs.com` ×27) rather than by constructing candidates.
    Session text is ground truth about what the system actually talks to; a guess is not.
 
+## A control is needed for a POSITIVE platform claim, not only for a negative one
+
+The 2026-09-27 and 2026-09-28 rules both protect a **negative** claim ("this API is dead").
+A universal **positive** claim needs its own control, and 2026-09-30 produced two instances of
+the same failure in one pass:
+
+- **Tribe / Events Calendar**: 200 at `workshopsf.org` proves that *one venue* exposes it. It
+  does not prove the plugin path is stable across WordPress installs. A bogus route on the
+  same host (`/definitely-not-a-route`) returned **404 `rest_no_route`** while the real route
+  returned 200 in the same pass — that is the control that upgrades "one venue has an API" to
+  "this is a platform surface." Note the asymmetry: the bogus route 404ing is what proves the
+  200 is *the route answering*, not the host answering everything with 200.
+- **Shopify `products.json`**: `omnivorebooks.myshopify.com` answering 200 says nothing about
+  Shopify. Three unrelated storefronts (`allbirds.com`, `kith.com`, `mvmtwatches.com`)
+  returned 200 with correct typed product records in the same pass; a fourth (`gymshark.com`)
+  returned **403 with an Akamai HTML challenge page**. Read that 403 correctly: it is *that
+  store's* edge WAF in front of the origin, not a platform property, and it must not be
+  written up as "gymshark has no products.json" any more than a token 404 would be written up
+  as "Lever is dead."
+
+**Rule: for any claim of the form "platform X exposes Y," probe at least one tenant unrelated
+to the one that surfaced it.** One tenant is an anecdote; three is a platform.
+
+## A probe defect that produces a plausible negative is the most expensive kind
+
+Two probe bugs in one 2026-09-30 pass, both of which first read as real findings about the
+world and neither of which was:
+
+1. **`rstrip` with a suffix.** `base.rstrip("/products.json?limit=2")` stripped a *character
+   set* off three hostnames, turning `allbirds.com` into `www.allb`, `kith.com` into `kith`.
+   Every "control tenant" then failed at DNS on a host that never existed. That output is
+   **byte-identical in shape** to three stores genuinely lacking the endpoint — the exact trap
+   the 09-28 note warns about ("recover real URLs from the corpus, not from memory or
+   guessing"). The tell: three hosts failing DNS while a fourth on the same list succeeded is
+   not a plausible distribution; if some controls work and the rest are name-resolution
+   failures, suspect the URL construction before the world.
+2. **A capped read reported as a payload defect.** `limit=250/300/1000` each failed to parse
+   at the *identical* offset 598476. Three different limits cannot produce the same byte
+   offset in the response; that is the client's read cap, not the server's payload. Reading
+   the body whole returned 776,437 bytes parsing cleanly.
+
+**Rules:** a negative reading is only trustworthy if the probe's own construction was checked
+first; and **identical failure offsets across differing inputs mean the client, not the
+origin** — investigate the probe before the service.
+
+## A plugin/platform surface is a better catalog entry than a single site
+
+Four cataloged entries from earlier runs (`greenhouse`, `ashby`, `lever`, `workday`) are
+per-platform, and they are the ones that pay off. `tribe_events` and `shopify_products` belong
+in the same class, and the catalog entry should say so explicitly: the connector takes a
+*host*, not a token, because the path is identical across every install of the platform. A
+per-site entry would be wrong in the useful direction — it would imply the surface is a quirk
+of one venue, and the next session would re-derive the same probe from scratch.
+
+Worth stating in the entry that the **plugin surface is often richer than the aggregator it
+sits next to**: Tribe's first-party feed carries `cost` and `categories` for one venue, which
+DoTheBay's city-wide feed does not carry for that venue at all.
+
+## A key name is not a data contract, and a 200 is not the data you asked for
+
+`/wp-json/wp/v2/tribe_venue` returns **200 with real venue records** and **every address
+column `null`** — `venueaddress`, `city`, `state`, `zip`, `latitude`, `longitude`, `phone`,
+`website`, on two independent tenants. It is a custom post type, so it serialises post fields;
+the venue's address is the plugin's own postmeta, which only the v1 namespace exposes
+(`/wp-json/tribe/events/v1/venues` → 6/6 records with a real street address). A connector that
+reads the CPT looks correct, returns records, and imports zero addresses with no error anywhere.
+
+This is the 09-28 wrong-layer error wearing a 200. The generalisation: **when a route exists
+and answers, still verify that the specific field you need is in the payload.** Status is
+transport; the field is the contract.
+
+The same pass found the inverse: `event.venue` is fully populated on one tenant and **absent
+entirely** on another, so the embedded object cannot be the contract either. The dedicated
+collection is.
+
+## A bounded negative is worth cataloguing; a bounded *guess* is not
+
+Two pipeline hosts answered `?format=json` with 200 and a 21KB config containing a
+`calendarView` key. The tempting next step is "Squarespace has a calendar API." Walking the
+payload: `calendarView: false`, and **zero date-shaped leaves anywhere in it** — the only
+dateish strings were booleans and the site's own `baseUrl`. It is site/template config.
+
+Written up as a source, that entry would be a false positive that costs a future run a
+re-probe. Written up as a *bounded negative* — "200 on this path, here is what it does not
+contain, here is the control that shows the host does not serve JSON everywhere" — it saves
+the next run and stops the inference. The line to hold: **a 200 whose payload does not contain
+the field is a negative result about the field, not a positive result about the path.**
+
+## The same probe defect twice in one day means the notes file is not being read as a rule
+
+The `rstrip()` URL-truncation defect recorded this morning for `products.json` recurred
+verbatim in this run's first pass: same `rstrip`, same mangled control hostnames, same
+DNS-failure shape indistinguishable from a real negative. It was caught again by the *tell*
+rather than by remembering the rule — several controls failing DNS while a fourth on the same
+list succeeded is not a plausible distribution.
+
+**The lesson is not "remember not to use rstrip."** It is that a note in a reference file did
+not change behaviour on a later run the same day, which means the note is a *description* of a
+past incident rather than a *procedure*. When a trap recurs, promote it: the actionable form
+is the build rule — **construct every URL as an explicit f-string over a host DNS has already
+resolved; never normalise a URL by stripping characters.** That is checkable while `rstrip` is
+not.
+
 ## Operational Checklist
 
 After each cron run:

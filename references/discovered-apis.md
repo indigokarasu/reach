@@ -91,6 +91,10 @@ _Lookup by what data you need. Cross-references the main source index._
 | General web search | SearXNG (main index) | Google CSAPI | CSAPI: programmatic Google search |
 | API discovery | RapidAPI marketplace | `public_apis` (main index) | hundreds of hosts across all categories |
 | Product manuals | `manualslib` (main index) | ManualZZ (mirror) | 3M+ manuals, 140K+ brands. Vue.js SPA, direct access blocked. Wayback CDX + image OCR. |
+| WordPress venue calendars | The Events Calendar (Tribe) REST v1 | — | Plugin surface: `/wp-json/tribe/events/v1/events` on any WP install running it. No auth. Real ISO datetimes, `cost`, `categories`, nested `venue`. |
+| WordPress venue roster + addresses | Tribe v1 `/venues` | — | Plugin surface: `/wp-json/tribe/events/v1/venues`. Carries street `address`, `city`, `stateprovince`, `zip`, `phone`, `website`. Core `wp/v2/tribe_venue` CPT does NOT. |
+| WordPress content enumeration | WordPress core REST (`/wp-json/wp/v2/`) | — | Platform surface: `/wp-json/wp/v2/types` lists every CPT + `rest_base` in one call — the cheapest way to find a site's event post type. No auth. |
+| Shopify storefront catalogue | Shopify `products.json` | — | Platform surface: `/products.json` and `/collections/<handle>/products.json`, no key. Title + price + availability; date only in `body_html`. |
 
 ### Web Data Extraction
 | Data | Best Source | Alternatives | Notes |
@@ -646,7 +650,7 @@ these four are cataloged here, none is in `sources.yml` yet.
 - **Verdict**: Documented live 2026-08-08; integrated in ocas-voyage lodging-sources.md. Rate codes expire in 15 min; checkout URLs in 30 min.
 
 
-### Events & City
+### Events & Venues
 
 No events source is registered in `sources.yml` (61 sources; nothing for live city events), yet
 Jared asked on 2026-09-29 for a 3-day SF events aggregation and the pipeline built for it
@@ -717,3 +721,251 @@ new against `sources/index.md` and this file. **Registration remains the open ga
 - **Notes**: Suggested Reach actions: `list_events` (`after`/`before` ISO dates, `page`),
   `get_event` (`id`). Consumer: the same SF events pipeline. Complements DoTheBay — two
   independent Bay Area feeds, so a union pull is meaningfully better than either alone.
+
+### Venue-Platform Feeds (plugin-level, not single-site)
+
+Discovered 2026-09-30 while mining the SF events pipeline for `api-mine`. Both entries below
+are **platform surfaces, not site feeds**: any venue running the underlying platform exposes
+them with no key, so they generalise across every consumer of that stack. Neither is a single
+quirk of one store or one venue. Both verified live with a known-good control in the same pass
+(see `api-mine-cron-notes.md` — a positive claim needs a control too, not just a negative one).
+
+#### The Events Calendar (Tribe) REST v1 — the standard WordPress events plugin
+- **Endpoint**: `https://<site>/wp-json/tribe/events/v1/events`
+- Also available, same auth: `/categories`, `/tags`, `/venues`, `/organizers`, `/venues/<id>`
+- **Access**: **None required.** No key, no account, no signup — it is a WordPress REST
+  namespace, and the plugin registers it automatically.
+- **Data**: Each event carries ~45 fields including `id`, `title`, `excerpt`, `description`,
+  `start_date` / `end_date` (real ISO-ish local `YYYY-MM-DD HH:MM:SS`) plus `start_date_utc` /
+  `utc_start_date`, `timezone` / `timezone_abbr`, `all_day`, `url` (permalink), `slug`,
+  **`venue`** (a nested object with the venue's own id/name/address/lat/lng), `organizer`,
+  `categories` (taxonomy terms — usable as a machine filter), `tags`, **`cost`** (a human
+  string like `"$58"`, with `cost_details` when structured), `image` (url + width/height),
+  `featured`, `status`, `website`, and `rest_url` for the single-event resource.
+- **Verified**: Live 2026-09-30 from this host against `workshopsf.org`.
+  `?per_page=3` → 200, keys and field set exactly as above, first event
+  `id=98161`, `start_date="2026-09-29 19:00:00"`, `cost="$58"`, real permalink.
+  **Pagination measured**: `total=94`, `total_pages=94` at `per_page=1`; `total_pages=2` at
+  `per_page=250` and 50 returned, so **`per_page` is honoured up to at least 250**.
+  **The date filter genuinely works**: `?start_date=2026-10-01&end_date=2026-10-01&per_page=5`
+  → `total=1`, returning `Beginner's Leatherworking`. This is the field that makes it
+  strictly better than scraping a month-grid.
+- **Control run**: a deliberately-bogus route on the same host
+  (`/wp-json/tribe/events/v1/definitely-not-a-route`) returned **404 with
+  `{"code":"rest_no_route"}`**, while the real route returned 200 on the same host in the same
+  pass — so the 200 is the route answering, not the host answering everything. The vendor's own
+  hosts were also probed: `wptribal.com` **timed out** and `allthingsevents.tribeplatform.com`
+  returned **525** (Cloudflare origin down) — neither is evidence about the API, which is why
+  neither is recorded as a source status.
+- **Quality**: Primary source — the venue's own WordPress install, no aggregator in the path.
+  `categories` gives a clean function filter, exactly the benefit Ashby's `department` provides
+  in the ATS notes above, and `cost` supplies the price signal the SF pipeline currently has to
+  infer. Complements DoTheBay and SF Funcheap (both already cataloged): those are *aggregator*
+  calendars covering everything, this is *first-party* structured data for one venue's own
+  calendar.
+- **Notes**: Suggested Reach actions: `list_events` (`site`, optional `start_date`/`end_date`,
+  `page`, `per_page`), `get_event` (`site`, `id`), `list_venues` (`site`), `list_categories`
+  (`site`). A connector should take a *site*, not a token — the plugin path is identical
+  everywhere, so one generic connector covers every WordPress venue rather than a per-venue
+  entry. Two measured traps for whoever wires it:
+  1. **`title`/`excerpt` are plain strings in this plugin, not `{rendered}`** as WP REST
+     normally returns. Reading `.rendered` yields `undefined` and a `if (!title) continue`
+     guard then drops every event silently — this is a live bug that took a venue to zero
+     published events in the SF pipeline with no error logged anywhere.
+  2. **HTML entities are not decoded** in the JSON: `cost="$58"` is clean, but
+     `title="Beginner&#8217;s Leatherworking"` and `"Carve &#038; Print"` are not.
+- **Source session**: `20260930_010742_f9476f` (SF events pipeline; Workshop SF venue)
+
+#### Shopify `products.json` — the standard commerce platform's public catalogue
+- **Endpoint**: `https://<store>/products.json` (whole catalogue) and
+  `https://<store>/collections/<handle>/products.json` (one collection). Both accept `limit`
+  (1–250 documented) and `page`.
+- **Access**: **None required** on the storefront's `*.myshopify.com` host. No key, no
+  Admin-API token, no app install. The Admin API is a different, authenticated thing — this is
+  the *public storefront* JSON.
+- **Data**: `products[]` with `id`, `title`, `handle`, `body_html`, `product_type`, `tags`,
+  `created_at`, `published_at`, `updated_at`, `vendor`, `images[]`, `options[]`, and
+  `variants[]` (each with `id`, `title`, **`price`**, `available`, `sku`). A bookseller
+  running author talks as products gets the event in `title` + `product_type`/`tags`, the
+  date in the `body_html`, and the price as a real numeric variant price.
+- **Verified**: Live 2026-09-30 from this host against `omnivorebooks.myshopify.com`.
+  `/collections/upcoming-events/products.json?limit=3` → 200, 3 products, first
+  `product_type="Event"`, `tags=["Event","Events"]`, `variants[0].price="0.00"`.
+  `/products.json?limit=3` → 200, first `product_type="New Books and Magazines"`, price
+  `50.00`. The full `upcoming-events` collection is **24 products, all `price="0.00"`** —
+  free events, which is exactly what that collection contains.
+  **Collection membership is honoured**: a bogus handle returned `{"products":[]}` with 200,
+  not a fall-through to the whole catalogue, so a bogus slug is distinguishable from a real
+  one.
+  **Limit clamping is not a thing here**: `limit=5→5`, `24→24`, and `25/50/250/1000` all
+  returned exactly 24 (the collection's size) with byte-identical responses. Whatever the
+  ceiling is, a request never returns more than the collection holds, so paging with `page`
+  is optional for small collections and needed for large ones.
+- **Control run — the important one, since a universal claim needs evidence**: four unrelated
+  Shopify storefronts in the same pass, URLs built explicitly. `www.allbirds.com` → **200**
+  (2 products, `type='Shoes'`), `kith.com` → **200** (`type='Low Top Sneakers'`), and
+  `www.mvmtwatches.com` → **200** (`type='Watches'`). `www.gymshark.com` returned **403 with
+  an Akamai HTML challenge page** — an edge WAF in front of the origin, i.e. *that store's*
+  edge configuration, not a platform behaviour. **3 of 4 unrelated stores returning 200 makes
+  this a general platform surface, not an Omnivore quirk.**
+- **Two probe defects of mine, recorded because both produced a false reading first**:
+  (1) pass 2 built control URLs with `base.rstrip("/products.json?limit=2")` — `rstrip` takes a
+  *character set*, not a suffix, so it stripped the tails off three hostnames and produced
+  `www.allb`, `www.gymshark`, `kith`; every "control" was then a DNS failure at a host that
+  never existed, which reads identically to "these stores don't expose products.json".
+  (2) pass 2 also reported `json_error: Invalid \uXXXX escape at offset 598476` for
+  `limit=250/300/1000` alike — three different limits failing at the *identical* byte offset
+  is a client artifact, not a payload defect; the same URL fetches as 776,437 bytes and parses
+  cleanly when the body is read whole instead of through a capped read. Neither defect
+  changed the conclusion, but the first pass's "3 DNS failures" would have been recorded as a
+  real negative without the second look.
+- **Notes**: Suggested Reach actions: `list_products` (`store`, `collection`, `page`, `limit`),
+  `get_product` (`store`, `handle`). Same connector argument as Tribe: the path is identical
+  across every store, so one generic connector covers every bookseller, museum shop, and
+  ticket-selling venue rather than a per-store entry. Real caveat for the SF events use case:
+  the **date is only in `body_html`**, which is unstructured and store-specific, so this source
+  gives reliable *title + price + availability* but needs per-store date parsing for a
+  3-day-window filter. `variants[0].available` is a usable stock/sold-out signal, which is the
+  one field the pipeline's sold-out filter currently lacks a first-party source for.
+- **Source session**: `20260930_010742_f9476f` (Omnivore Books venue in the SF events build)
+
+#### Tribe REST v1 `/venues` — first-party venue addresses (the Pink Pages address gap)
+- **Endpoint**: `https://<site>/wp-json/tribe/events/v1/venues` (collection, `per_page`
+  honoured) and `/wp-json/tribe/events/v1/venues/<id>` (single).
+- **Access**: **None required.** Same auth-free namespace as `/events`.
+- **Why this entry exists**: the SF events build closed with an explicit boundary — *"closing
+  that gap needs a per-venue source carrying addresses and contacts, a different data contract,
+  not a better parser."* The Pink Pages build has venues with names and URLs but no street
+  address, no phone, no lat/lng. This is that data contract, and it was already installed on
+  the pipeline's own hosts.
+- **Data**: `venues[]` with `id`, `venue` (name), `slug`, **`address`** (street line),
+  **`city`**, **`stateprovince`**, **`zip`**, `province`, `country`, **`phone`**, **`website`**,
+  `description`, `show_map`, `show_map_link`, `global_id` (a stable
+  `<host>?id=<venue_id>` cross-referencing key), and `global_id_lineage`.
+  `global_id` is the field that makes a union across many venue WordPress installs
+  *deduplicable* — the same physical venue is listed by several organizers on different hosts
+  and carries the same `global_id` when they are one site.
+- **Verified — the important part, and the reason the boundary above was wrong**: live
+  2026-09-30, **two independent tenants**, `?per_page=50`:
+  - `www.atasite.org` → `total=2`, **2/2 with `address`**, 2/2 `city`, 2/2 `zip`, 1/2 `website`,
+    0/2 `phone`. Rows: *Gray Area* — `2665 Mission Street`, San Francisco CA 94110,
+    `website=https://grayarea.org/`; *Artists' Television Access* — `992 Valencia Street`,
+    San Francisco CA 94110.
+  - `workshopsf.org` → `total=4`, **4/4 with `address`**, 4/4 `city`, 4/4 `zip`, 2/4 `phone`.
+    Rows include *WorkshopSF* — `1310 Haight Street` 94117, `(415) 926-8078`; *Mission
+    Location* — `726 15th St.` 94103; *Inner Richmond — Studio Sumi* — `5031 Geary Blvd`
+    94118; *Upper Haight — The Mellow SF* — `1401 Haight Street` 94117.
+  **`address` was populated on 6 of 6 records across both tenants.** A field present on 1 of
+  4 would not be a contract; 6 of 6 across two unrelated sites is one.
+- **The core CPT does NOT work — test this before you rely on the core route**: the core
+  route map *does* expose `tribe_venue` as a post type with `rest_base: tribe_venue`, and
+  `https://<site>/wp-json/wp/v2/tribe_venue` returns **200 with real venue rows** (2 rows on
+  atasite.org, 3 on workshopsf.org, titles `Gray Area`, `Upper Haight Location – The Mellow
+  SF`). It looks like the answer. **Every address column in it is `null`** —
+  `venueaddress`, `venueaddress_2`, `city`, `province`, `state`, `zip`, `postcode`, `country`,
+  `countrystate`, `latitude`, `longitude`, `phone`, `website` — on *both* hosts. The CPT
+  returns standard WP post fields (`title.rendered`, `slug`, `content`, `status`, `link`,
+  `meta`) because that is what the CPT *is*; the venue's address is Tribe's own postmeta,
+  which only the v1 namespace serialises. **A pipeline reading `wp/v2/tribe_venue` would get
+  200, find real venue records, and silently import zero addresses** — the exact
+  title-present-data-absent failure the 09-30 notes warn about, one layer down.
+- **Control runs**: bogus route `/wp-json/tribe/events/v1/definitely-not-a-route` → **404** on
+  both tenants while the real route returned 200 in the same pass; bogus CPT
+  `/wp-json/wp/v2/tribe_definitely_not_a_type` → **404** on both. A third tenant already in the
+  catalog as a *negative* control, `sf.funcheap.com` (WordPress, `cityguide` CPT, no Tribe),
+  returned **404** on `/tribe/events/v1/venues` in the same pass — so the 200s are Tribe's
+  plugin answering, not every WordPress site answering 200.
+- **One real caveat, measured**: the `venue` object **embedded in the events feed is not
+  always present**. `workshopsf.org` events carry a fully-populated embedded `venue`
+  (address + phone). `www.atasite.org` events return **no `venue` key at all** on the sampled
+  record. So *events* is not a reliable venue-address source across tenants — **the
+  `/venues` collection is**. Any connector should call `/venues` for address data rather than
+  harvesting `event.venue`, and must treat the embedded object as best-effort.
+- **Quality**: Primary source, first-party, no aggregator in the path. This is a strict
+  *supplement* to DoTheBay (already cataloged), not a replacement: DoTheBay's
+  `venue.latitude/longitude` and `capacity` are not in Tribe's payload, and Tribe's venues are
+  only the venues running the plugin. Together they cover each other's gaps — DoTheBay for
+  coordinates and city-wide breadth, Tribe v1 for first-party addresses of the specific
+  venues the pipeline already pulls events from.
+- **Notes**: Suggested Reach actions: `list_venues` (`site`, `page`, `per_page`),
+  `get_venue` (`site`, `id`). Note the existing `list_venues` action in the DoTheBay entry
+  above is a *different source's* action; these would share a name only if the two connectors
+  are namespaced, which the registry should decide deliberately. The connector takes a
+  *site*, not a token.
+- **Source session**: `20260930_021734_09a811` (Pink Pages venue-address gap; pipeline hosts
+  `www.atasite.org`, `workshopsf.org`)
+
+#### WordPress core REST `/wp-json/wp/v2/` — the enumeration surface under every site above
+- **Endpoint**: `https://<site>/wp-json/` (route index) and
+  `https://<site>/wp-json/wp/v2/types` (every registered post type + its `rest_base`).
+- **Access**: **None required.** No key, no account. It can be disabled per-site, and some
+  hosts front it with a WAF, so treat a 404 as "this site has it off" rather than universal.
+- **Why it earns an entry**: the per-site discovery method the pipeline should use. One call
+  to `/wp-json/wp/v2/types` returns the complete list of custom post types with their REST
+  bases — that is how the SF Funcheap `cityguide` type was originally found, and it is the
+  cheapest possible way to answer "is there structured event data on this site, and under
+  what key" for *any* WordPress host, before writing a single scraper selector.
+- **Data**: `/wp-json/` returns `namespaces[]`, `routes{}` (the full route map with regex
+  patterns), `authentication`, and `site`, `site_name`, and `description`. `/wp-json/wp/v2/types`
+  returns each type's `slug`, `rest_base`, `name`, `hierarchical`, `taxonomies`, and
+  `supports`.
+- **Verified live 2026-09-30 across four tenants** — the platform claim needs more than one
+  tenant, per `api-mine-cron-notes.md`:
+  - `grayarea.org` — `/wp-json/` 200, **1,722,538 bytes**, **46 namespaces, 1,208 routes**,
+    27 types (`course`, `lesson`, `product`, `feedback` — a Sensei LMS + WooCommerce install,
+    i.e. events are *not* a CPT here).
+  - `www.atasite.org` — 200, **20 namespaces, 291 routes**, 16 types, incl.
+    `tribe_events`→`tribe_events`, `tribe_venue`→`tribe_venue`, `tribe_organizer`,
+    `tribe_rsvp_tickets`, `tec_calendar_embed`.
+  - `workshopsf.org` — 200, **36 namespaces, 717 routes**, 21 types, incl. the same Tribe set
+    plus `jetpack_form` and `spectra-popup`.
+  - `sf.funcheap.com` — 200, **14 namespaces, 245 routes**, 13 types, incl. `cityguide`.
+  - **Control**: a deliberately-bogus `/wp-json/definitely-not-a-route-xyz` returned **404**
+    on all four hosts in the same pass while the real route answered 200 on each — so the 200
+    is the route answering, not the host answering everything. Note the servers differ per
+    host (Cloudflare, Apache, nginx, nginx), so this is not one host's configuration.
+  - **Bounded by the hosts that are not WordPress**: `www.missionbowlingclub.com` and
+    `www.sfcb.org` → `/wp-json/` **404**, `Server: Squarespace`; `www.clayroomsf.com` → 404,
+    Cloudflare in front of Wix (`static.parastorage.com` + `static.wixstatic.com` in the root
+    response's `link` header). Those are a *different platform* with a different surface, not
+    a WordPress host that lacks the API — see the Squarespace note below.
+- **One real defect of mine, recorded because it produced a plausible false positive first**:
+  the first pass used `rstrip()` to normalise URLs, which takes a *character set* rather than
+  a suffix, and turned control hostnames into hosts that never existed — the failure mode
+  already recorded on 2026-09-30 for `products.json`. Same bug, second probe, same day. It
+  was caught by the tell from that same note: several controls failing at DNS while a fourth
+  on the same list succeeded is not a plausible distribution. All URLs in the final pass are
+  built as explicit f-strings over hosts DNS had already resolved.
+- **Notes**: Suggested Reach actions: `describe_site` (`site`) returning namespaces, route
+  count and the type→`rest_base` map, and `list_posts` (`site`, `type`, `page`, `per_page`).
+  This is the natural pre-flight for any venue pipeline: probe `describe_site` first, branch
+  on the returned types, and only fall back to HTML scraping for the hosts that report no
+  event-shaped type.
+- **Source session**: `20260930_021734_09a811` (pipeline host enumeration)
+
+#### Squarespace `?format=json` — 200 on two hosts, and it is *not* event data (a bounded negative)
+- **Endpoint**: `https://<site>/?format=json` (also `?format=json-pretty`).
+- **Access**: **None required** on the two hosts probed.
+- **Measured**: `www.sfcb.org` → **200**, `application/json;charset=utf-8`, **21,473 bytes**;
+  `www.missionbowlingclub.com` → **200**, same content type, **21,079 bytes**. Top-level keys
+  on both: `website`, `collection`, `template`, `mainContent`, `calendarView`, `shoppingCart`,
+  `userAccountsContext`, `localizedStrings`, `pagePreviewContext`, `uiextensions`,
+  `showCart`, `shareButtons`, `empty`, `emptyFolder`.
+- **Why this is recorded as a bounded negative rather than dropped**: the obvious next
+  inference from a `calendarView` key is "Squarespace has a calendar API." It does not follow.
+  Walking the full config on both hosts found **`calendarView: false`** and **zero date-shaped
+  leaves** anywhere in the payload — the only strings resembling dates are `Server` booleans
+  and the site's own `baseUrl`/`authenticUrl`. **A key name is not a data contract.** This
+  payload is site/template configuration (`collection.itemCount`, `navigationTitle`, SEO
+  flags), not event records. `collection` describes the blog *collection* (categories, folder,
+  ordering, `itemCount`), not individual items.
+- **Control**: `/api/1.0/website-configuration` and `/app/` both returned **404** on both
+  hosts, and a bogus `/api/1.0/definitely-not-a-route-xyz` also 404 — so the 200 on
+  `?format=json` is that specific path answering, not the host serving JSON everywhere.
+- **Implication for the pipeline**: the SF events host list mixes platforms. Squarespace and
+  Wix hosts (Mission Bowling Club, SFCB, Clay Room) have **no** first-party structured event
+  surface reachable without per-site reverse engineering, and the one public JSON endpoint
+  carries no event data. For those hosts an aggregator (DoTheBay, SF Funcheap) remains the
+  correct source. This entry exists so a later run does not re-probe Squarespace hosts for a
+  fourth time, and does not mistake the 200 for a calendar API.
+- **Source session**: `20260930_021734_09a811`
