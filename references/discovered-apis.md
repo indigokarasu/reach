@@ -644,3 +644,76 @@ these four are cataloged here, none is in `sources.yml` yet.
 - **Endpoint**: `https://mcp.stayker.com/mcp`, Bearer auth (sandbox vs production key scopes)
 - **Access**: 8 tools: search, details, lookup_booking, get_booking, cancel_booking (two-step), resend_confirmation, search_tools; chain_code brand filter.
 - **Verdict**: Documented live 2026-08-08; integrated in ocas-voyage lodging-sources.md. Rate codes expire in 15 min; checkout URLs in 30 min.
+
+
+### Events & City
+
+No events source is registered in `sources.yml` (61 sources; nothing for live city events), yet
+Jared asked on 2026-09-29 for a 3-day SF events aggregation and the pipeline built for it
+(`indigokarasu.com/pinkpages/`, `sf-events-v2/fetch.mjs`) already consumes an undocumented public
+JSON feed with no key and no signup. Both entries below were verified live 2026-09-29 and are
+new against `sources/index.md` and this file. **Registration remains the open gap.**
+
+#### DoTheBay JSON Feed
+- **Endpoint**: `https://dothebay.com/events/today.json?per_page=25` (also `tomorrow.json`);
+  **arbitrary future date** at `https://dothebay.com/events/{YYYY}/{M}/{D}.json?per_page=100`;
+  venues at `https://dothebay.com/venues.json?per_page=200` (paged, 447 venues, 18 pages).
+  Per-venue calendar is the permalink + `.json` (e.g. `dothebay.com/venues/greek-theatre.json`).
+- **Access**: **None required.** No key, no account. Send a descriptive `User-Agent`.
+- **Data**: Rich event objects with `id`, `title`, `permalink`, `buy_url` (the venue's own ticket
+  URL), `sold_out`, `is_free`, `is_ongoing`, `doors`, `category`, `begin_date`/`begin_time`/
+  `end_date`/`end_time`, `excerpt`, `imagery`, and a nested `venue` object carrying `title`,
+  `permalink`, `latitude`/`longitude`, `full_address`, `city`, `neighborhood`, `capacity`.
+  `sold_out` and `buy_url` are exactly the two fields the Pink Pages filter needs, and the
+  nested `venue.latitude/longitude` is why that build geo-filters by bounding box rather than
+  trusting the `city` string.
+- **Rate limits**: None published. `per_page` appears to be **clamped to 25** — asking for 100
+  still returns 25 (confirmed on the dated feed). Paging is real: `paging.next_page_path`
+  (`today.json?per_page=25&page=2` returned the remaining 20 of 45), and `per_page=200` on
+  venues also returns 25, so walk `paging` to exhaustion rather than trusting `per_page`.
+- **Quality**: Aggregator (DoTheBay, a Scout-era/DoPages property) — a *secondary* source, not
+  the venue's own page. That is acceptable here only because `buy_url` points through to the
+  original organizer. Multi-day aggregation still requires one request per date, so the
+  "find a multi-day window" question raised in the build session is answered by the dated path,
+  not by a week feed.
+- **Verified**: Live 2026-09-29. `today.json` 200, 124,161 bytes, `api_version: 0.005`,
+  25 events; dated path `events/2026/10/01.json` 200, 202,921 bytes, 25 events, `date: 2026-10-01`
+  — so a future date really is reachable, which is the fact the build session lacked.
+  `venues.json` 200, 447 venues. `week.json` and `weekend.json` both return **200 with
+  `events: []`** — they are not 404s, they are empty, so do not record a week feed as available.
+  `events.json?date=` **ignores the `date` param** and returns today (byte-identical to
+  `today.json`); use the path form. Venue `neighborhood` is `null` on every event object
+  observed, so it cannot be relied on as a filter field.
+- **Notes**: Suggested Reach actions: `events_on` (`date`, `page` → one dated feed),
+  `list_venues` (`page`). Consumer: the SF events pipeline behind Pink Pages.
+  Complements `open_meteo`/`transit_land` for local-life questions; adds nothing for
+  ticket booking (it links out to organizers).
+
+#### SF Funcheap WordPress REST API
+- **Endpoint**: `https://sf.funcheap.com/wp-json/wp/v2/` — `posts` (144,419 entries, paged),
+  `cityguide` (8,154 entries), `categories` (320), `tags` (12,891); RSS at `/feed/`.
+  Enumerate the site with `/wp-json/wp/v2/types` — it reveals every custom post type and its
+  `rest_base`, which is how `cityguide` was found.
+- **Access**: **None required.** WP REST is public on this site; no key, no auth.
+- **Data**: One post per event listing. Fields: `id`, `date`, `date_gmt`, `modified`, `link`
+  (the canonical listing URL), `slug`, `title.rendered`, `excerpt.rendered`, `content.rendered`,
+  `featured_media`, `categories`, `tags`, `meta`. Every entry is a *page* titled like
+  `11/22/26: Golden Gate Park Sunday Roller Disco Party (SF) - FREE` — i.e. **the event date and
+  the free/paid signal are in the structured title**, with a real `pubDate` in the RSS feed.
+  Price appears as `$\d` tokens in content; the `is_free` signal is the `- FREE` title suffix.
+- **Rate limits**: `X-WP-Total` and `X-WP-TotalPages` are returned on every request; page with
+  `?per_page=` and follow `X-WP-NextPage` (`Link` header) to exhaustion. Note the totals are the
+  whole archive (144k posts), so any date filter has to be applied client-side.
+- **Quality**: Free editorial events calendar, entirely complementary to DoTheBay — Funcheap
+  covers the free/community listings DoTheBay's paid listings index less well, and the two have
+  little title overlap. As a WP site it is a far better surface than browser scraping.
+- **Verified**: Live 2026-09-29. `/wp-json/wp/v2/types` 200 (6,581 bytes) listing 13 types incl.
+  `cityguide` (`rest_base: cityguide`); `posts?per_page=1` 200 with `X-WP-Total: 144419`;
+  `cityguide?per_page=3` 200, 28,563 bytes, 8,154 entries; `/feed/` 200, 10 items,
+  `pubDate` present. **Caveat measured, not assumed**: the newest `posts` entry returned
+  `content.rendered` of only **132 chars and an empty `excerpt`**, so the body is not a reliable
+  field to parse price/date from on the latest posts — prefer the title and `date` fields over
+  HTML-parsing `content`, and expect the full body on older posts.
+- **Notes**: Suggested Reach actions: `list_events` (`after`/`before` ISO dates, `page`),
+  `get_event` (`id`). Consumer: the same SF events pipeline. Complements DoTheBay — two
+  independent Bay Area feeds, so a union pull is meaningfully better than either alone.
