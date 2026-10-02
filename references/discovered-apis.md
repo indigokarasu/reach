@@ -943,6 +943,66 @@ quirk of one store or one venue. Both verified live with a known-good control in
   event-shaped type.
 - **Source session**: `20260930_021734_09a811` (pipeline host enumeration)
 
+#### Restaurant menu data — a bounded negative across 16 reached restaurants (no menu API to prefer)
+- **Question**: `ocas-taste`'s `taste_menu_monitor.py` scrapes restaurant menus by stripping
+  HTML and by running `pdftotext` over linked PDFs. Is there a structured menu API that would
+  beat scraping, for the 27 SF restaurants in its own `menu_monitor.json`?
+- **Access**: **None found.** Every probe below is a public, no-key GET.
+- **Hypothesis 1 — schema.org JSON-LD `Menu`/`MenuItem` (the obvious one)**: **0 of 16** in the
+  survey pass, re-verified on an independent second pass as **0 of 9** — *zero* hits on any host
+  that answered, including hosts whose JSON-LD is otherwise rich. The recheck printed every
+  `@type` it saw, which is the part worth keeping: `richtable`/`lazybear`/`waterbar` each carry
+  `foodestablishment`, `postaladdress`, `openinghoursspecification`, `reservation`, `reserveaction`
+  (3 blocks each); `delfina` also `geocoordinates` + `contactpoint`; `chefico`/`benu`/`nopa` carry
+  `localbusiness`/`website`; `zunicafe` carries `breadcrumblist`/`searchaction`. These sites are
+  emitting rich structured data and deliberately omitting the menu — an *engineered* absence
+  rather than a site-by-site accident: search engines stopped consuming `Menu` markup years ago,
+  so restaurants have no incentive to add it. A missing `@type` among a full sibling set is a
+  stronger negative than a missing `@type` on a page with no JSON-LD at all.
+- **Hypothesis 2 — an OpenMenu/online-ordering API** (OpenMenu powers a large share of US
+  restaurant ordering): probe returned **HTTP 200 with `{"status": 417, ...key error...}`**,
+  i.e. the "200 is not the data" trap again. `api.openmenu.co` is **NXDOMAIN**; `openmenu.com`
+  answers but is not an API host. Neither is a source.
+- **Hypothesis 3 — a WordPress menu custom-post-type**: 8 of 8 reached WordPress hosts expose
+  no menu CPT and report **zero** menu-plugin namespaces in their `/wp-json/` namespace
+  inventory. Zero, not "not found" — the namespace list is authoritative, and authoritative-looking
+  things are where mistakes live.
+- **What the menu data actually is** (the useful half of this entry):
+  - **PDF menus** — 2 of 16 host a linked menu PDF (`zunicafe.com` 8 PDFs, `flourandwater.com` 5).
+    Zuni's `Sample-Dinner-menu.pdf` fetched **200**, 656,005 bytes, magic `b'%PDF-'`, and
+    `pdftotext -layout` returned **rc=0, 6,852 chars, 63 non-empty lines** carrying a full
+    priced dinner menu ("Crostone with oyster mushrooms… 32.00", "Grilled Stemple Creek Ranch
+    ribeye steak … 95.00").
+  - **Server-rendered HTML** — prices live in markup, not a data structure; 5 of 16 show
+    `$-` amounts in HTML.
+- **The trap that nearly produced the wrong answer (record it)**: I counted prices with
+  `\$\s?\d{1,3}(?:\.\d{2})?`. The Zuni PDF carries prices as **bare numbers with no `$`**
+  (`24.00`, `95.00`) — so my probe reported the one PDF containing a *complete priced menu* as the
+  one PDF with **no prices**. I nearly catalogued "menus are absent" from my own regex defect. The
+  control that caught it: print the **actual extracted text**, not a count. A count can be wrong
+  for a reason that looks exactly like a world fact.
+- **Control**: `https://en.wikipedia.org/wiki/Restaurant` → HTTP 200, `ld_blocks=1`, `menu=0` —
+  proving the extractor fires on real JSON-LD in this same pass, so `menu=0` is a true negative
+  rather than a parser that silently matches nothing.
+- **Bounded by transport failures, reported not hidden**: 16 of 27 config entries reached (200 +
+  a title); 11 did not — 4 DNS NXDOMAIN (`statebirdprovisions.com`, `hogislandoyster.com`,
+  `kokkariexpress.com`, `cortlandsf.com`), 1 SSL **expired** cert (`swanoysterdepot.com`),
+  1 hostname mismatch (`perbacco.com` — the cert is not valid for that name), 1 TLS alert
+  (`singlethread.com`), 3 timeouts, 1 HTTP 403 (`kokkari.com`). The expired/mismatched certs
+  are real operational facts about the monitor's targets that no API would fix.
+- **Verdict**: **no source to add.** No menu API beats the existing scrape for this skill. Nothing
+  appended to `sources.yml`. Recorded as a negative so a later run does not re-probe WordPress
+  menu CPTs, JSON-LD `Menu`, or OpenMenu for a fifth time.
+- **Finding about *this* skill, not a new source**: `taste_menu_monitor.py`'s
+  `extract_dishes_from_text` keys on `cfg["food_keywords"]` + noise patterns rather than on
+  prices, so it is **not** subject to the bare-number trap. Confirmed by reading the function: it
+  scores whole lines by food keyword, not arithmetic. Per the ethos rules no site-specific
+  workaround is hardcoded — the monitor's keyword approach already survives the case that broke
+  my probe.
+- **Source session**: `reach:api-mine` cron run 2026-10-01 (delta since the 2026-09-30 run;
+  27-entry survey from `commons/data/ocas-taste/menu_monitor.json`, probe scripts `apimine_*`
+  under `cache/scratch`).
+
 #### Squarespace `?format=json` — 200 on two hosts, and it is *not* event data (a bounded negative)
 - **Endpoint**: `https://<site>/?format=json` (also `?format=json-pretty`).
 - **Access**: **None required** on the two hosts probed.

@@ -235,6 +235,41 @@ is the build rule — **construct every URL as an explicit f-string over a host 
 resolved; never normalise a URL by stripping characters.** That is checkable while `rstrip` is
 not.
 
+## Probing a live surface: print the data, not the count (2026-10-01)
+
+**2026-10-01 — a "$-anchored" price regex reported the single richest menu as empty.** Probing
+16 SF restaurant sites for structured menu data, I counted prices with `\$\s?\d{1,3}(?:\.\d{2})?`.
+Zuni's menu PDF writes prices as **bare numbers** (`24.00`, `95.00`) with no currency symbol, so
+the one document containing a complete priced dinner menu scored **zero prices**. The count looked
+exactly like a world fact — menus have no prices — and I nearly catalogued that. What caught it was
+switching from counting to **printing the actual extracted text** (`pdftotext` output plus price
+context), where the full menu was plainly visible. **Rule: when a probe yields a surprising zero,
+re-run it printing the underlying records before believing it.** A count has no way to distinguish
+"I found nothing" from "I looked for the wrong shape." This is the same family as the
+"200 is not the data" trap above — the probe succeeded, the question was malformed.
+
+**2026-10-01 — a validation filter that discarded the subject of the study.** I marked sites "is
+this a restaurant?" with a title regex (`restaurant|menu|bakery|oyster|...`). It scored `Zuni Café`,
+`Tartine`, `Nopa`, `Rich Table` and `Cotogna` as **not restaurants**, collapsing the sample from 16
+to 1 — and the one survivor was a false positive. Every excluded site was plainly a restaurant; the
+filter was matching my vocabulary, not the world. A denominator built by discarding unfamiliar
+cases produces exactly the conclusion it was written to produce. **Rule: validate sample membership
+against ground truth you did not author (a config file the skill itself reads), and report the
+exclusion count rather than letting it silently shrink the denominator.**
+
+**2026-10-01 — a parked-domain hijack page read as the richest data source.** `sushihon.com`
+returns HTTP 200 with **9** JSON-LD blocks and looked like the best structured-data host in the
+survey. Its `<title>` is `FAJARTOTO ... Peringkat No#1 Situs Togel` — an Indonesian gambling
+landing page squatting an expired restaurant domain. It carried more `localbusiness`-shaped
+markup than any real restaurant, and I had already written it into the catalog entry as evidence
+before a second, independent pass failed to connect to it at all. **Rule: a 200 with rich
+structured data is not evidence of a live business.** Print the `<title>` (and, for a
+business-shaped claim, the `name` field) for every host you intend to cite as evidence. A domain
+that has expired and been re-registered serves whatever the new owner serves, with the old
+host's structured data gone and the new owner's replacing it. This one would have made the whole
+entry wrong, and it was only caught because the "recheck the prior claim" step is part of the run,
+not an optional extra.
+
 ## Operational Checklist
 
 After each cron run:
@@ -244,3 +279,6 @@ After each cron run:
 - [ ] If the cron didn't run (gap > 24h): check gateway status, the cron depends on the scheduler ticker
 - [ ] Any new negative claim about a dead API was proven with a known-good tenant first
 - [ ] Probes ran as scratch files, not as `python3 -c` or a pipe into an interpreter
+- [ ] Any host cited as evidence had its `<title>` printed — a parked/hijacked domain returns 200
+      with better structured data than the live site it replaced
+- [ ] Any surprising zero was re-derived by printing the underlying records, not by re-running the count
