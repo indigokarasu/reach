@@ -1029,3 +1029,85 @@ quirk of one store or one venue. Both verified live with a known-good control in
   correct source. This entry exists so a later run does not re-probe Squarespace hosts for a
   fourth time, and does not mistake the 200 for a calendar API.
 - **Source session**: `20260930_021734_09a811`
+
+#### Washingtonian.com `event` CPT — registered, reachable, and EMPTY (a bounded negative)
+- **Question**: the SF pipeline's city-wide breadth comes from DoTheBay + SF Funcheap.
+  DC has no equivalent cataloged, and the DC pipeline pulls from exactly **one** host
+  (`popville.com/wp-json/wp/v2/events`, 3,370 events). Does a DC outlet expose a second
+  independent events surface? `washingtonian.com` is WordPress and appeared in a session as
+  a DC source, and `/wp-json/wp/v2/types` reports an `event` CPT with `rest_base: event`.
+- **Access**: **None required** on the route. No key, no account.
+- **Measured 2026-10-02**: `/wp-json/wp/v2/event?per_page=3` → **200, `X-WP-Total: 0`,
+  `X-WP-TotalPages: 0`, body `[]` (2 bytes)**. `after=2026-10-01` → 0. `after=1990-01-01` → 0.
+  `_embed`, and the `?rest_route=` alternative → 0. `status=publish` → 0;
+  `status=any` → **400** (no auth to widen it); `context=edit` → **401**. So the zero is not
+  a permissions artifact — an unauthorised caller sees exactly what an authorised one would
+  see minus drafts, and both are empty.
+- **A full type census on the same host** is what settles it, because a 200 on an empty
+  collection is the "200 is not the data" trap: `event` 0 · `top_listing` 12 ·
+  `posts` **60,591** · `media` 232,460 · `provider` 7,788 · `guest-author` 72 ·
+  `newsletters` 9 · `mag_issue` 1 · `wp_mapit_map` 9. **Every other registered type holds
+  rows; `event` alone is zero.** A single empty type beside nine populated ones is a
+  deliberate registration with no content, not a broken route.
+- **Controls**: bogus type `/wp/v2/definitely_not_a_type` → **404**; the neighbouring
+  `posts` and `media` types via their **real `rest_base` read from the `/types` map** →
+  **200** with totals. The SF analogue was probed the same way in the same pass:
+  `sf.funcheap.com/wp-json/wp/v2/cityguide` → 200, `X-WP-Total: 8,156`, first row
+  `2026 Hardly Strictly Bluegrass in Golden Gate Park` — so a populated events CPT on this
+  exact platform shape does read back, and the Washingtonian's zero is a fact about that site.
+- **My probe defect, recorded because it briefly pointed the wrong way**: the first pass used
+  `/wp/v2/post` as the "known-good neighbouring type" control and it 404'd — consistent with
+  *either* "this type has no data" *or* "I guessed the `rest_base` wrong". The `rest_base` for
+  `post` is `posts`. **Read `rest_base` from `/wp-json/wp/v2/types`; never derive the path
+  from the type slug.** Same family as the `rstrip()` defect recorded twice on 2026-09-30:
+  guessing a URL and then reading the guess's failure as a fact about the world.
+- **Verdict**: **not a source.** Recorded so a later run does not re-probe the Washingtonian's
+  `event` CPT, and so nobody files "Washingtonian events" as a second DC feed. DC's only
+  working first-party events surface remains Popville.
+
+#### `wp_mapit_map` — a location CPT that is a map embed, not a venue record (a bounded negative)
+- Found in the same type census, and worth one probe because the 2026-09-30 entry named the
+  exact open contract: venues carrying **street address, city, zip, phone** (closed on the SF
+  side by Tribe REST v1 `/venues`). A location CPT on a DC outlet is prima facie that contract.
+- **Endpoint**: `https://www.washingtonian.com/wp-json/wp/v2/wp_mapit_map` — no auth,
+  `X-WP-Total: 9`, single page (9 rows = **full census**, not a sample).
+- **Measured 2026-10-02**: all 9 rows, titles are `Highway to Heaven`, `Casamigos`,
+  `Deep Creek Lake`, `Raystown Lake`, `Lake Anna`, `2024 Fourth of July Fireworks Map`,
+  `Hot List Map`, `Great Getaways`, `Sundials Around DC`. **`acf` is an empty array on
+  every row** (`len=0`), and no address-shaped key exists anywhere in any record — the only
+  near-match is `template` (empty string), which is a WordPress field, not an address.
+  Tally over all 9: rows with street-ish text **1/9**, rows with city text **0/9**.
+  The "coordinate keys 9/9" hit is a **false positive of my own probe**: the string `lat`
+  matches inside `template`/`aioseo` class names, not an actual latitude field.
+- **What the rows actually are**: MapIt embed *pages* keyed to story slugs, not venue
+  entities. `Deep Creek Lake` and `Lake Anna` are vacation destinations; a venue roster
+  containing them is not a venue roster. **A type named `*_map` is a rendering surface for
+  an interactive map, not a location directory.**
+- **Verdict**: **not a source**, and specifically **not** the venue-address contract. The
+  09-30 gap is still open for DC; this closes nothing. Recorded so a later run does not
+  re-read a `map` CPT as a location directory.
+- **Source session**: `reach:api-mine` cron run 2026-10-02 (delta since 2026-10-01; DC side
+  of the Pink Pages pipeline, `dc-fetch.mjs`, which references exactly one source host).
+
+#### DC-wide aggregator sweep — no DoTheBay equivalent found (a bounded negative)
+- **Question**: SF breadth comes from DoTheBay's documented public JSON feed. Is there a
+  DC-wide equivalent? This is the single highest-value open question for the DC side.
+- **Probe 2026-10-02**, all no-key public GETs: `do613.com`, `seatrain.us`,
+  `artsandculturedc.com`, `dothatdc.com`, `eventh.us` → **NXDOMAIN** (these sites are
+  gone or renamed; `seatrain.us` checked with and without `www`). `timeout.com/washington-dc`
+  → **404** on `/wp-json/`; `dc.curbed.com` → TLS handshake failure from this host on both
+  `/` and `/wp-json/` (so **unreached, not negative** — Curbed is behind a network that
+  refuses this host). `patch.com/calendar.json` → **404**; `patch.com/wp-json/` → **403**
+  (Fastly, WP REST disabled). `dcist.com/wp-json/` → **404**. `citycast.com` → 200
+  `text/html` at **both** `/` and `/wp-json/wp/v2/types` with byte-identical bodies, i.e.
+  the same SPA shell, so it serves no JSON. `api.axios.com/feed/` → 200 but
+  `application/rss+xml` (RSS, not JSON, and news not events). `streetsofdc.com` → 200 with a
+  114-byte JS `window.location.href="/lander"` stub on **both** the real path and the bogus
+  control — a parked/lander host, so its 200 carries no information either way.
+- **Method note**: the six DNS failures were re-probed **individually** rather than reported
+  as negatives. An unresolvable name is a statement about the resolver, not about the API,
+  and `fringecentral.com` — which **does** resolve — turns out to refuse connections on 443
+  (`Connection refused`), a third distinct outcome. **Three different failures (NXDOMAIN,
+  refused, TLS EOF) must not be collapsed into one "not available" row.**
+- **Verdict**: **no DC-wide aggregator feed cataloged.** DC stays single-source (Popville),
+  which is the honest state and is worth stating plainly rather than papering over.
