@@ -94,6 +94,7 @@ _Lookup by what data you need. Cross-references the main source index._
 | WordPress venue calendars | The Events Calendar (Tribe) REST v1 | — | Plugin surface: `/wp-json/tribe/events/v1/events` on any WP install running it. No auth. Real ISO datetimes, `cost`, `categories`, nested `venue`. |
 | WordPress venue roster + addresses | Tribe v1 `/venues` | — | Plugin surface: `/wp-json/tribe/events/v1/venues`. Carries street `address`, `city`, `stateprovince`, `zip`, `phone`, `website`. Core `wp/v2/tribe_venue` CPT does NOT. |
 | WordPress content enumeration | WordPress core REST (`/wp-json/wp/v2/`) | — | Platform surface: `/wp-json/wp/v2/types` lists every CPT + `rest_base` in one call — the cheapest way to find a site's event post type. No auth. |
+| Modern Events Calendar (MEC) venues | `wp/v2/mc_event` + `wp/v2/mc_venue` | Tribe REST v1 | Plugin surface, distinct from Tribe. Dates live in the **capitalised `ACF`** key (`display_dates_sort`), not `acf`; `content`/`excerpt` absent; no event→venue link. Atlas (DC) confirmed live 2026-10-03. |
 | Shopify storefront catalogue | Shopify `products.json` | — | Platform surface: `/products.json` and `/collections/<handle>/products.json`, no key. Title + price + availability; date only in `body_html`. |
 
 ### Web Data Extraction
@@ -1111,3 +1112,97 @@ quirk of one store or one venue. Both verified live with a known-good control in
   refused, TLS EOF) must not be collapsed into one "not available" row.**
 - **Verdict**: **no DC-wide aggregator feed cataloged.** DC stays single-source (Popville),
   which is the honest state and is worth stating plainly rather than papering over.
+
+#### Atlas Performing Arts Center (atlasarts.org) — a second real DC events feed, via `mc_event`
+- **Question**: the DC side of the Pink Pages pipeline is single-source (Popville) and the
+  2026-10-02 sweep found no DC-wide aggregator. Do any **DC venues already appearing as link
+  targets in `dc-events.json`** expose a first-party structured event feed?
+- **Endpoint**: `https://www.atlasarts.org/wp-json/wp/v2/mc_event` — **no auth**, JSON.
+  `X-WP-Total: 154`, `X-WP-TotalPages: 154` (per_page=1; 2 pages at per_page=100).
+  Venues: `/wp-json/wp/v2/mc_venue` — **15 rows**. Taxonomies `mc_series`, `mc_language`,
+  `mc_season`, `xdgp_genre`.
+- **Census method** (the 2026-10-02 defect, applied): read `rest_base` from
+  `/wp-json/wp/v2/types` rather than deriving the path. `/types` reports `mc_event`,
+  `mc_venue`, `mc_person`, `mc_partner` — a distinct DC venue using the **Modern
+  Events Calendar (MEC)** plugin, not the The Events Calendar/Tribe surface already
+  cataloged for the SF side.
+- **Measured 2026-10-03**, all 154 events fetched (full census, not a sample):
+  - **ACF is exposed and complete** — `acf` is an empty array, but **`ACF` (capitalised) is
+    populated on 154/154**. Reading only `acf` would have produced "Atlas has no dates",
+    the same false negative recorded twice on 2026-09-30. Every ACF key is present on all
+    154 rows (the earlier per-100 sample showing `71`/`108` coverage was page-1 bias).
+  - **Dates**: `display_dates_sort` **154/154**, `display_dates_long` and
+    `display_dates_short` 154/154. Values are `YYYY-MM-DD`, or a range for multi-day runs
+    (`'2026-11-07 – 2026-11-08'`, `'2026-10-29 – 2026-10-31'`) — parse the range, do not
+    assume a single ISO date.
+  - **Ticket links**: `ticket_url` **154/154**; `pm_event_id` (Salesforce/MEC event id)
+    **154/154**. `schema_lowest_price` and `price_range` keys exist on every row but were
+    empty in the sample, so price is **not** reliably available from this surface.
+  - **Images**: `event_header_image`, `event_list_image`, `calendar_image` 154/154, each an
+    ACF image object with a direct `url`.
+  - **Description**: `short_desc` / `long_desc` 154/154 (HTML).
+  - **`content` and `excerpt` are NOT in the response** — the CPT returns no rendered body.
+    A pipeline that assumes `content.rendered` gets a `KeyError`, not a short description.
+  - **`after=` filter works** on the post date: `after=2026-09-01T00:00:00` → 18 rows. It
+    filters on **publish date, not performance date** — it is a cheap narrowing only, and
+    `display_dates_sort` is the field to filter the actual window on.
+- **Venues**: `mc_venue` 15 rows, **10/15 carrying `venue_address`** as a real multi-line
+  street address (`"1333 H Street NE\r\nWashington, DC 20002"`), plus `venue_time_zone`
+  (`America/New_York`) and `pm_venue_id`. **There is no `venue`/`mc_venue` field on the
+  event's ACF**, so event→venue linkage is not available in this response — an event row
+  carries dates, tickets and images but not a venue name. That is a real limitation on
+  usefulness, recorded rather than glossed.
+- **Controls**: bogus type `/wp-json/wp/v2/definitely_not_a_type` → **404**. `/types` returns
+  **200 with 13 CPTs**, and `mc_event`/`mc_venue` read back populated on the same host in the
+  same pass — so this is not the empty-collection trap that closed the Washingtonian `event`
+  CPT on 2026-10-02.
+- **Verdict**: **catalog it** — the first cataloged *DC second* events feed. Not DC-wide
+  (it is one venue), so it does **not** close the aggregator gap; it is a bounded,
+  first-party, no-key source that beats Popville on images and price-adjacent keys.
+- **Source session**: `reach:api-mine` cron 2026-10-03 (delta from the 2026-10-02 DC sweep;
+  link targets read out of `dc-events.json`, which names `atlasarts.org/events/march-on/`).
+
+#### Washington Performing Arts (washingtonperformingarts.org) — `event` CPT is populated but carries NO dates (a bounded negative)
+- **Found in the same sweep**, because `washingtonperformingarts.org/event/elisabeth-pion/`
+  is a live link target in `dc-events.json` and the host is WordPress with a registered
+  `event` CPT. The exact shape that produced the Washingtonian's empty-CPT false positive.
+- **Endpoint**: `https://www.washingtonperformingarts.org/wp-json/wp/v2/event` — **no auth**,
+  `X-WP-Total: 189`, 19 pages at per_page=100. `rest_base: event` read from `/types`, never
+  derived. Control: `/wp-json/wp/v2/definitely_not_a_type` → **404**.
+- **Measured 2026-10-03**: unlike the Washingtonian, this CPT is **populated** — 100 of 189
+  rows inspected. But the event data an events pipeline needs is absent from the REST shape:
+  - **`ACF` and `acf` are both empty on every row**, and `meta` carries only WordPress
+    internals (`_acf_changed`, `inline_featured_image`, `footnotes`, `_members_access_*`) —
+    a **zero** for every non-internal meta key across all 100 rows.
+  - **No date field anywhere.** No `2026-…` date string appears in the row's ACF/meta, and
+    `season`/`genre`/`series` are bare taxonomy **ids** (`[54] [36] [9]`), not labels.
+  - Dates exist only as **prose inside `content.rendered`**, e.g.
+    `Wednesday, September 9, 2026, 8:30 PM` — human-readable, per-event, no schema.
+  - `/venue` **13/13 rows** exist (`Barrel House Cafe & Bar`, `Carter Barron Amphitheater`,
+    `The National Theatre`, `Music Center at Strathmore`, `DAR Constitution Hall`, …) but
+    their `acf`/`meta` are likewise empty and their `content` is marketing copy, **not an
+    address**. Census over all 13: **0 rows carry a street address**.
+- **Verdict**: **not a source.** The 189 rows and a 13-row venue roster make this look like a
+  win on a title-count check; the dates and addresses that would make it usable are prose in
+  an HTML body. Recorded so a later run does not read `X-WP-Total: 189` as DC feed breadth.
+- **Source session**: `reach:api-mine` cron 2026-10-03.
+
+#### DC venues probed in the same sweep — three distinct refusal shapes, none a feed
+- `kennedy-center.org`, `smithsonianmag.com`, `folklife.si.edu`, `si.edu`, `axs.com` →
+  **403** on `/wp-json/wp/v2/types`. `airandspace.si.edu` → 403 on the page and 404 on
+  `/jsonapi` and `/api/v1/events`; its whole domain sits behind a **Cloudflare "Just a
+  moment..." interstitial** (5,636-byte challenge body), which is a *bot wall*, not an
+  absent API. `dcist.com` → **TLS internal-error** from this host (unreached, not negative).
+  `capitolclubdc.org` → **NXDOMAIN**. `mountvernonsquare.org` → 404 on `/wp-json`.
+  `discoverthecity.ticketleap.com/wp-json/` → 200 but 199,749 bytes of HTML, the same SPA
+  shell. `eventbrite.com/wp-json/` → 404. `politics-prose.com` (9 link targets in
+  `dc-events.json`) → `/` and `/wp-json/` both 403 Cloudflare, so the events it contributes
+  can only be reached through Popville.
+- **Method note**: 403, TLS failure and NXDOMAIN are three different statements and are kept
+  as three. **Folger** was checked in the same pass and is a true negative of a fourth kind:
+  `/types` → 200 with 13 CPTs, and `/wp-json/` → 200 with namespaces
+  `[aiarc/v1, akismet, mailin, oembed, popup-maker, redirection, relevanssi, v1,
+  wp-abilities, wp-block-editor, wp-site-health, wp/v2]` — **no `mc_event`, no `event` CPT,
+  and zero event-shaped routes** in the route table. Its events are pages/prose only.
+  `folger.edu/whats-on/...` links in `dc-events.json` stay unverified from a feed.
+- **Verdict**: no further DC venue feed found. Atlas is the only addition.
