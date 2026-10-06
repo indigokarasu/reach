@@ -1206,3 +1206,114 @@ quirk of one store or one venue. Both verified live with a known-good control in
   and zero event-shaped routes** in the route table. Its events are pages/prose only.
   `folger.edu/whats-on/...` links in `dc-events.json` stay unverified from a feed.
 - **Verdict**: no further DC venue feed found. Atlas is the only addition.
+
+### 2026-10-05 — the SF side: two findings, one of them a correction to a live reference file
+
+#### foopee.com "The List" — a real per-week structured listing surface, at a path the reference file got wrong
+- **Question**: `whattodo72-maintenance/references/event-sources.md` records Foopee as
+  **"Undecided — index only inspected"**, with the note that
+  `foopee.com/punk/the-list/` is an index with *"Zero event rows"*, that listings live on
+  `by-date.<N>.html`, and that SF-scoping is unsafe because *"venue/city is a per-row field
+  on the detail pages, which was not yet confirmed"*. The pipeline is live and shipping
+  foopee events, so the reference and the running code disagree. Which is right?
+- **Transport, established first (it changes how everything below must be written)**:
+  **`https://` on `www.foopee.com` is not usable from this host at all.** DNS resolves to
+  8 addresses (`16.15.0.204`, `16.15.0.25`, `16.15.4.150`, `16.15.4.237`, `16.15.5.252`,
+  `52.219.113.139`, `52.219.116.83`, `52.219.220.243` — an S3/CloudFront origin). TCP
+  connects to all 8; **TLS resets on all 5 of the 16.15.x addresses and times out on all 3
+  of the 52.219.x ones**. With a browser User-Agent instead of Reach's, over the bare host,
+  the reset is identical — so the User-Agent is not the variable. **Plain HTTP answers 200.**
+  Any connector for this host must be built on `http://`; the `https://` URL in the
+  reference file and in the pipeline's own source cannot work from here.
+- **The path correction is the substantive finding.** The record-bearing pages are at
+  **`http://www.foopee.com/punk/the-list/by-date.<N>.html`**, *not* `/punk/by-date.<N>.html`.
+  `/punk/by-date.0.html` → **404**, and so does every one of the 50 other page files the
+  index names, until the trailing slash of `/punk/the-list/` is restored. The reference
+  file's `foopee.com/punk/the-list/` plus a relative `by-date.N.html` concatenate to the
+  wrong base, and the 404 is **differentially real** — confirmed against same-host bogus
+  controls at both the wrong base (`by-date.99.html`, `CONTROL.0.html`, `by-club.0.html` →
+  all 404) and the right one (`by-date.99.html`, `by-club.99.html`,
+  `definitely-not-here.html` → all 404 while the real files 200).
+- **The "zero event rows" claim is wrong, and its replacement is a per-row contract.**
+  Full census of the two pages a 3-day window needs, `by-date.0` and `by-date.1`:
+  - `by-date.0.html` — 10,020 B, `Last-Modified: Mon, 05 Oct 2026 11:00:48 GMT`,
+    `<H2>Sep 28 - Oct 4</H2>`, 24 `<LI>`, **1** day block (`Sun Oct 4`), 38 clock times,
+    24 `$` amounts, 13 `, S.F.` venue labels.
+  - `by-date.1.html` — 39,977 B, `<H2>Oct 5 - Oct 11</H2>`, 164 `<LI>`, **7** day blocks
+    (`oct_05` `Mon Oct 5` … `oct_11`), 261 clock times, 137 `$` amounts, 78 SF labels.
+  - Rows are `<LI><A NAME="oct_05"><B>Mon Oct 5</B></A><UL>` then one `<LI>` per event
+    beginning `<LI><B><A HREF="by-club.N.html#anchor">VENUE</A></B> ARTISTS …`.
+    **157 rows carry a venue link; 78 end in `, S.F.` and 79 do not.** The reference
+    file's open question is therefore answered in the affirmative: **venue/city IS a
+    per-row field, so a `, S.F.$` venue-label test scopes this source safely**, and it
+    has a control in the same population — Berkeley, Oakland, Novato, San Jose, Mill
+    Valley rows that the identical rule excludes. A scope filter with no in-population
+    negative is untested; this one has 79.
+  - **The current week is `N=1`, not `N=0`.** The reference file says `N=0` is current.
+    Page 0's window is `Sep 28 - Oct 4`, i.e. the week that just ended; `N=1` is
+    `Oct 5 - Oct 11` and `N=2` is `Oct 12 - Oct 18`. A pipeline reading only `by-date.0`
+    is reading a page whose only day block is the day before today.
+  - Cross-index pages resolve at the same base and are worth knowing:
+    `by-club.0.html` (63,289 B, "Listing By Venue"), `by-band.0.html` (123,809 B,
+    "Listing By Band"), plus `by-club.1-3`, `by-band.1-3`, and `by-date.0-45`.
+  - **The documented parsing traps are confirmed against live rows, and one is worse than
+    documented.** **0 of the 78 SF rows lack a printed time**, so Time-TBA is not the live
+    failure mode here — but **55 SF rows carry a two-time `7pm/8pm` slash
+    pair**, and 54 carry a `$` price. `"$0"` appears on **0** rows, so a free tag must come
+    from the word `free` (7 SF rows), not from a zero price. Two live rows that break naive
+    parsing: `Castro, S.F. | She & Him, Jordana a/a 7pm/8pm # (sold out)` — the `#` is a
+    sold-out marker, not a price, and `FML Studio, 2400 Filbert Street, Oakland` proves the
+    city is the *last* comma-token, so the city is not always a fixed suffix.
+- **Verdict**: **catalog it.** It is a no-key, browser-free, per-week listing surface with
+  a per-row city field, and it is strictly better than the generated-HTML scrape the
+  pipeline does today for the rows it needs. It is not an "API" in the JSON sense — the
+  surface is HTML, served from S3, reachable only over plain HTTP, with no feed, no JSON
+  and no iCal at any path probed (`index.rss` 404, `?feed=rss2` 200-but-HTML,
+  `atom.xml` 404, `?format=json` 200-but-HTML, `?list-type=2` 200-but-HTML, every
+  `.txt`/`.raw`/`.html` sibling 404 against a 200 root). A connector for it is a **line/`<LI>`
+  parser over `<UL>` nesting**, which the pipeline already has — the win is the corrected
+  base path, the corrected week index, and an `http://` transport, not a new parser.
+- **Correction to route outside Reach**: `whattodo72-maintenance/references/event-sources.md`
+  is wrong on three points (HTTPS is unusable, the base path, the current-week index) and its
+  Foopee row is marked "Undecided" for a source the live pipeline already ships. That file
+  belongs to the whattodo72 skill, not here.
+- **Source session**: `reach:api-mine` cron 2026-10-05.
+
+#### `api.ticketweb.com` — an unauthenticated iCal feed, and a bounded negative for the SF pipeline
+- **Question**: TicketWeb is a live link target in the Pink Pages corpus and the site is
+  angular (`data-ng-app="tw.ecom"`), i.e. built for scraping to be painful. Is there a
+  machine surface?
+- **Endpoint**: `https://api.ticketweb.com/` → **200, `Content-Type: text/calendar`,
+  21,406 bytes, no key**, `PRODID:-//TicketWeb//iCal4j 1.0//EN`. A well-formed
+  `VCALENDAR` with **40 `VEVENT`s**, each carrying `DTSTART`, `DTEND`, `SUMMARY`, `UID`
+  (`<id>@www.ticketweb.com`), `TZID`, `LOCATION`, `DESCRIPTION` and `URL` — the `UID`
+  is the numeric event id, so a per-event URL is reconstructible.
+- **The control is what makes this a negative for us, and it is a real control**: a bogus
+  path (`/definitely-not-a-feed`) and `?format=json` and `/index.ics` all returned **the same
+  40-event set**, byte-identical after stripping `DTSTAMP`/`LAST-MODIFIED` (fingerprints
+  over the ordered `UID`+`SUMMARY` pairs agreed; a hash mismatch in a first pass was
+  `DTSTAMP` moving between fetches, not feed rotation). **So the host serves one global
+  feed on every path — it is not a per-event or per-venue endpoint, and the path is
+  cosmetic.** Three consecutive fetches returned an identical UID set, so it is a stable
+  publication, not a rotating sample.
+- **Bounded negative for the SF pipeline**: **0 of 40 VEVENTs name San Francisco**, and
+  the venues are Miami, Nashville, New York, Toronto, Lafayette LA, Winter Park FL and
+  similar (`Hard Rock Cafe - Miami`, `Birdland Theater\, New York\, NY`). URLs span
+  `ticketweb.com` ×34, `ticketweb.ca` ×4, `ticketweb.uk` ×2. **12 of 40 runs exceed 60
+  days** — these are season subscriptions and recurring passes, not dated events, so
+  a date-window filter does not reduce them. **No price field anywhere** in the feed.
+- **Verdict**: **the API exists and works; do not catalog it as a source for this skill.**
+  An events pipeline that only wants Bay Area events gets **zero** usable rows from a
+  feed that is otherwise free, keyless and correct. Recorded because a 200 on an
+  unauthenticated calendar is exactly the shape that gets adopted by a later run without
+  anyone counting the Bay Area rows.
+- **Also probed, both negative, and kept distinct**: **Songkick** — `www.songkick.com` 200s,
+  but **every** API path returns a **uniform 404 with the Songkick HTML page as the body**
+  (`/v3.0/events`, `/v3.0/events?app_key=…`, `/v3/events`, `/v3/events.json`, `/v3/calendar`,
+  `/api`, `/artist-calendar.ics`) including the deliberate control
+  `/v3.0/definitely_not_a_resource`. A uniform 404 across a real-looking path and a bogus
+  one is the **09-28 wrong-layer tell**: the router is refusing before resolving the
+  resource, not the resource being absent. The legacy Songkick v3 API is not confirmed dead
+  — it is **unreached from here**, and the correct next step is a documented path shape
+  from Songkick's own docs, not more guessing. Recorded as unreached, not as dead.
+- **Source session**: `reach:api-mine` cron 2026-10-05.

@@ -270,6 +270,44 @@ host's structured data gone and the new owner's replacing it. This one would hav
 entry wrong, and it was only caught because the "recheck the prior claim" step is part of the run,
 not an optional extra.
 
+## A relative link concatenates against the path that FETCHED it, not the one that displayed it (2026-10-05)
+
+**Four consecutive passes got this wrong in the same direction.** `foopee.com` serves its
+index at `/punk/the-list/`, and that index links 50 sibling files *relatively*
+(`HREF="by-date.0.html"`). Fetching the index and then requesting
+`http://www.foopee.com/punk/` + `by-date.0.html` returns **404**, and so does every one of
+the 50 files. Four passes reported a 404 sweep, a `by-club` sweep, a
+"S3 origin exposes nothing" claim and a "the site is empty" reading, all of them
+**arithmetic on a base path I had invented**, and none of them about foopee. The correct
+base is `http://www.foopee.com/punk/the-list/` and the record-bearing pages 200 there.
+
+**The build rule, in the form that is checkable:** when a document's own relative hrefs are
+your next targets, resolve them against **the URL the document was fetched from, as
+`urllib.parse.urljoin(response.geturl(), href)`** — and print the resolved absolute URL
+before fetching it. Do not hand-concatenate a directory. `geturl()` is the fetched URL *after*
+redirects, which is why it is the right input and a remembered path is not.
+
+The tell that this has happened: **a large batch of same-shaped paths 404ing in a regular
+pattern** (`by-date.0` … `by-date.45` all 404) is not a missing-content shape, it is a
+resolution shape. Real missing content is sparse and its boundaries mean something. And the
+control only helps if it is on the *same* axis: a bogus filename 404ing at the wrong base
+proves nothing about the right base. Probe `by-date.99.html` at **both** bases — the wrong
+one 404s for the same reason the real file does, and only the right base's 404 is
+informative.
+
+Two adjacent traps from the same run, both mine:
+
+- **A character class can exclude the thing you are looking for.** `HREF="(by-band[^"#]*\.html)"`
+  can never match `by-band.0.html#Foo`, because `#` precedes `.html`. The class excluded a
+  literal that appears *before* the extension. The empty result read as "the document
+  references no page files" — when it referenced 50. When an extraction returns zero, print
+  the raw `HREF="..."` values it is scanning before concluding the document lacks them.
+- **A count of the wrong population is not a small error, it is a different claim.** Counting
+  `, S.F.` in a *venue index* gave 48 and looked like 48 SF events; the venue index is
+  alphabetical with one link per venue ever listed, not a listing. The same regex on the
+  date-ordered page gave 78 rows, of which 78 were events. Identify the population from the
+  document's own `<H2>` heading before quoting any count from it.
+
 ## Operational Checklist
 
 After each cron run:
@@ -282,3 +320,9 @@ After each cron run:
 - [ ] Any host cited as evidence had its `<title>` printed — a parked/hijacked domain returns 200
       with better structured data than the live site it replaced
 - [ ] Any surprising zero was re-derived by printing the underlying records, not by re-running the count
+- [ ] Every URL built from a document's own `HREF=` was resolved with `urljoin(fetched_url, href)`
+      and printed before fetching — never hand-concatenated onto a remembered directory
+- [ ] Every extraction that returned zero had its raw input printed, to rule out a regex that
+      cannot match its own target
+- [ ] Every count was taken from a population identified by the document's own heading, not
+      inferred from proximity
