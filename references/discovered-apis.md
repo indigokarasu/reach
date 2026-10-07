@@ -409,6 +409,61 @@ _Force-ranked within each data type. Only populated when 2+ discovered APIs comp
 
 _Newest additions go here first. When fully categorized and indexed, move to Registry._
 
+### Local Events & Calendars
+
+#### Luma Calendar API (`calendar/get-items`)
+- **Endpoint**: `https://api.luma.com/calendar/get-items` — **GET** with
+  `?calendar_api_id=<id>` (POST returns **405 Method Not Allowed**; the verb
+  matters). One known-good public calendar id: `cal-twiOosdGMMY66DI`
+  (The Infants' Tart / TIAT, SF).
+- **Access**: **None required.** No key, no account, no auth header.
+- **Data**: Rich event JSON — top-level `entries[]` + `has_more` (paged).
+  Per entry: `api_id`, `event{api_id, name, start_at, end_at, timezone, url,
+  event_type, location_type, geo_address_info, coordinate{latitude,longitude},
+  cover_url, social_image_url, visibility}`, plus `hosts`, `guest_count`,
+  `ticket_count`, `ticket_info`, `registration_availability`, `tags`,
+  `featured_guests`. Dates are ISO-8601 UTC (`2026-10-08T02:00:00.000Z`).
+- **Rate limits**: None published; no `X-RateLimit-*` observed. Paginate via
+  `has_more`/`entries` cursor rather than a page param.
+- **Quality**: Primary source — Luma is the organizer's own platform, so
+  `name`/`start_at`/`geo_address_info`/`coordinate` are organizer-supplied, not
+  scraped. Complements DoTheBay/Funcheap (aggregators) and Omnivore (Shopify).
+- **Discovered**: 2026-10-06 (reach:api-mine — surfaced from the SF Pink Pages
+  and Fog & Found event pipelines, which already consume Luma for SF listings)
+- **Verified**: Live 2026-10-06 from this host: GET `calendar/get-items?
+  calendar_api_id=cal-twiOosdGMMY66DI` → 200 `application/json`, 85,461 bytes,
+  19 entries, `has_more` present. POST to the same path → 405.
+- **Notes**: Already wired into `sf-events-v2/fetch.mjs` (Pink Pages) and the
+  Fog & Found scraper. Suggested Reach actions: `get_items` (`calendar_api_id`,
+  cursor), `calendar_search`. Registration gap: no `luma` source in `sources.yml`
+  (61 sources; nothing for live city events).
+- **Source session**: `20260929_024506_627314ac` (Pink Pages Luma probe),
+  `20261005_165517_56e7a6` (Fog & Found)
+
+#### Decentered Eventracker RSS
+- **Endpoint**: `https://events.decentered.org/feeds/rss.xml` — plain RSS 2.0
+  (`application/rss+xml`). No JSON mirror exists (`/api/events` → 404).
+- **Access**: **None required.** No key, no account. Send a descriptive
+  `User-Agent`.
+- **Data**: Bay Area event listings, one `<item>` per event. Fields: `title`
+  (carries the date + event name, e.g. `10/05/2026: Queer Pirate Club`),
+  `link` (organizer URL — sometimes an S3 image or bare domain, so validate
+  before linking), `description` (HTML), `category`, `pubDate`. 51 items live.
+- **Rate limits**: None published.
+- **Quality**: Community event tracker for Bay Area indie/DIY events — a
+  primary-ish source (organizer-submitted). Complements DoTheBay/Funcheap.
+- **Discovered**: 2026-10-06 (reach:api-mine — surfaced from the Fog & Found
+  pipeline, which already consumes this feed via `fetchDecentered()`)
+- **Verified**: Live 2026-10-06 from this host: GET `/feeds/rss.xml` → 200
+  `application/rss+xml`, 37,123 bytes, 51 `<item>`s. `/api/events` → 404
+  (nginx), so RSS is the only structured surface.
+- **Notes**: Already wired into `scrape.mjs` (`fetchDecentered()`) in the
+  Fog & Found repo. RSS, not JSON — a connector would parse XML. Suggested
+  Reach action: `events_feed`. Registration gap: no `decentered` source in
+  `sources.yml`.
+- **Source session**: `20261005_165517_56e7a6` (Fog & Found),
+  `20261005_223025_e10fec`
+
 ### Web Data Extraction
 
 #### Zyte API
