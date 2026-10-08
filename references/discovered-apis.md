@@ -45,6 +45,18 @@ _Lookup by what data you need. Cross-references the main source index._
 |------|-------------|--------------|-------|
 | Drug recalls | FDA open data | — | Not yet integrated |
 
+### Sports & Scores
+| Data | Best Source | Alternatives | Notes |
+|------|-------------|--------------|-------|
+| Team schedules / fixtures | ESPN Site API | — | Keyless; `site.api.espn.com/.../teams/<id>/schedule`. Dynamic by team ID + season |
+| Live scores / scoreboard | ESPN Site API | — | Keyless; `.../<league>/scoreboard` |
+| Standings / rosters / injuries | ESPN Site API | — | `sports.core.api.espn.com` link-graph variant |
+
+### Civic & Volunteer
+| Data | Best Source | Alternatives | Notes |
+|------|-------------|--------------|-------|
+| Volunteer / campaign events | Mobilize America API | — | Keyless public reads; 361k+ US events; filter by zip + radius |
+
 ### Archives & Newspapers
 | Data | Best Source | Alternatives | Notes |
 |------|-------------|--------------|-------|
@@ -463,6 +475,99 @@ _Newest additions go here first. When fully categorized and indexed, move to Reg
   `sources.yml`.
 - **Source session**: `20261005_165517_56e7a6` (Fog & Found),
   `20261005_223025_e10fec`
+
+### Sports & Scores
+
+#### ESPN Site API (schedules, scoreboards)
+- **Endpoint**: `https://site.api.espn.com/apis/site/v2/sports/<sport>/<league>/...`
+  — GET, no key. Core routes: `teams/<id>/schedule`,
+  `scoreboard`, `teams`, `teams/<id>`; also
+  `https://sports.core.api.espn.com/v2/sports/<sport>/leagues/<league>/...`
+  (`events`, `events/<id>`, `seasons/<yr>/teams/<id>`), which returns `$ref`
+  link graphs rather than inline payloads.
+- **Access**: **None required.** No key, no account, no auth header (a
+  browser-like `User-Agent` + `Accept: application/json` is sufficient).
+- **Data**: Full pro/college sports coverage — teams, schedules, scoreboards,
+  standings, rosters, injuries, venues. Schedule payload: top-level
+  `events[]`, each with `competitions[0].competitors[]`
+  (`homeAway`, `team.id`, `team.displayName`, `score.value`),
+  `competitions[0].venue.{fullName,address.city}`, ISO `date`. Team IDs are
+  ESPN's numeric IDs (e.g. WNBA Golden State Valkyries = `129689`, NY Liberty
+  = `9`). League slugs: `basketball/wnba`, `basketball/nba`,
+  `football/nfl`, `baseball/mlb`, etc.
+- **Rate limits**: None published; no `X-RateLimit-*` observed. Responses are
+  gzip-encoded and large (a full season schedule ≈ 850 KB).
+- **Quality**: Primary-ish aggregator (ESPN's own data feed). Dynamic — team
+  IDs and season slugs mean no hardcoded dates and no year-boundary breakage.
+  Better than scraping `valkyries.wnba.com/schedule` or parsing a Wikipedia
+  season table (both brittle, both previously used).
+- **Discovered**: 2026-10-06 (reach:api-mine — surfaced from the Fog & Found /
+  SF Pink Pages events pipeline, which needed a non-hardcoded Valkyries
+  schedule)
+- **Verified**: Live 2026-10-07 from this host: `.../basketball/wnba/teams/129689/schedule`
+  → 200 `application/json`, 854,587 B, 53 events, `venue=Chase Center | San
+  Francisco`; second tenant `.../wnba/teams/9/schedule` → 200, 55 events (55);
+  `.../wnba/scoreboard` → 200, 2 events; `sports.core.api.espn.com/.../seasons/2026/teams/129689`
+  → 200, 8,327 B. Controls: bogus path → **404**, bogus league → **400**, so
+  the 200 is the route answering, not the host.
+- **Notes**: **Supersedes a wrong negative.** The 2026-10-06 run recorded "ESPN
+  API requires authentication / no public JSON endpoint" — that was the wrong
+  layer (a `site.web.api`/auth-gated host, not `site.api.espn.com`). The
+  keyless `site.api.espn.com` and `sports.core.api.espn.com` hosts answer
+  anonymously. Suggested Reach actions: `team_schedule` (`sport`, `league`,
+  `team_id`), `scoreboard` (`sport`, `league`, `dates?`), `standings`.
+  Registration gap: no `sports` source in `sources.yml` (61 sources; zero
+  sports/score coverage).
+- **Source session**: `20261006_153428_05cc55` (Fog & Found Valkyries fix),
+  `20261006_181421_091b7a`, `20261007_021535_126a73`
+
+### Civic & Volunteer
+
+#### Mobilize America API
+- **Endpoint**: `https://api.mobilize.us/v1/` — GET, no key. Routes:
+  `events` (`?zipcode=<zip>&max_dist=<mi>&per_page=<n>`, plus `timeslot_start`,
+  `event_types`), `events/<id>`, `organizations`, `organizations/<id>`,
+  `people`, `attendance`. List responses are DRF-paginated
+  (`count`, `next`, `previous`, `data[]`, `metadata`).
+- **Access**: **None required** for public event reads (the `people`/`attendance`
+  routes need OAuth; events do not). A plain GET works; no key, no header.
+- **Data**: Mobilize is the progressive-campaign volunteer/event platform
+  (DNC, DSA, YIMBY, city campaigns, nonprofits). Event object:
+  `id`, `title`, `event_type` (`CANVASS`/`PHONE_BANK`/`MEETING`/`COMMUNITY`/…),
+  `description`, `summary`, `browser_url`, `is_virtual`,
+  `timezone`, `location{locality,region,postal_code,address_lines}`,
+  `sponsor{name}`, `tags`, `event_campaign`, `timeslots[]`
+  (`start_date`/`end_date` epoch, `is_full`), `created_date`.
+  Filterable by zip + radius, by timeslot range, and by event type.
+- **Rate limits**: Not documented on the public read path; DRF page size caps
+  at `per_page` (defaults modest, up to 1000 observed accepted). Throttle
+  politely.
+- **Quality**: Primary source (organizer-entered). The only structured surface
+  for US civic/volunteer events — complements DoTheBay/Luma/Funcheap
+  (commercial/community culture) with a civic-action layer none of them carry.
+- **Discovered**: 2026-10-07 (reach:api-mine — surfaced from the SF events
+  session, where a `mobilize.us/.../event/<id>` URL appeared as a venue link)
+- **Verified**: Live 2026-10-07 from this host: `events?per_page=2` → 200
+  `application/json`, `count=361455`, full field set present;
+  `events?zipcode=94110&max_dist=25&per_page=3` → 200, `count=1000`, real SF
+  rows (`Abundance Happy Hour! | San Francisco | YIMBY Democrats for America`);
+  `events/757709` → 200, 4,633 B. Control: bogus path → **404** HTML.
+- **Notes**: A general national platform (361k+ events), not SF-only — filter
+  by zip/radius. Suggested Reach actions: `search_events` (`zipcode`,
+  `max_dist`, `event_types?`, `timeslot_start?`), `get_event`, `list_orgs`.
+  Registration gap: no `civic`/`volunteer` source in `sources.yml`.
+- **Source session**: `20261007_021535_126a73` (Fog & Found venue catalog),
+  `20261006_181421_091b7a`
+
+#### Bounded negatives (checked, no source added)
+- **Sofar Sounds** — no keyless event API. `/api/v1/events` → **401**
+  `{"error": ...}`; `/san-francisco` and `/events/<id>` serve a 1.1 KB SPA
+  shell (JS bundle `main-*.js`), so event data is client-rendered. Not
+  cataloged; scrape via browser or skip.
+- **SF Station** — WordPress, but its calendar is a page/theme, not a REST CPT:
+  `/wp-json/wp/v2/types` returns only `attachment, page, post, wp_block`
+  (no event type). The pipeline's `sfStation()` correctly parses its schema.org
+  microdata instead. No API beats the existing microdata parse; nothing added.
 
 ### Web Data Extraction
 

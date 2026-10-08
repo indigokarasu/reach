@@ -308,6 +308,21 @@ Two adjacent traps from the same run, both mine:
   date-ordered page gave 78 rows, of which 78 were events. Identify the population from the
   document's own `<H2>` heading before quoting any count from it.
 
+## A recorded negative can be disproven by a later session — re-probe before trusting it (2026-10-07)
+
+The 2026-10-06 run wrote "ESPN API requires authentication / no public JSON endpoint" into a session
+conclusion, from a probe of an auth-gated host. Three interactive sessions the next day (Fog & Found
+/ SF Pink Pages) fetched a full WNBA season schedule from `site.api.espn.com` — **keyless, HTTP 200,
+854 KB, 53 events** — and a second tenant (`.../wnba/teams/9/schedule`) returned 200 too, with a
+bogus-path control 404ing. The negative was never cataloged, but it had been *concluded*, and a run
+that trusted it would have skipped the source.
+
+**Rule: a negative about a host is a claim about a layer, and a "no public endpoint" verdict must
+name the exact host it probed.** `site.api.espn.com` and `sports.core.api.espn.com` are separate
+hosts from `site.web.api.espn.com`; "ESPN requires auth" was true of one host and false of the
+others. When a later session shows real data flowing from a host a prior run wrote off, re-probe
+and correct the record — the session is evidence the negative was scoped too broadly.
+
 ## Operational Checklist
 
 After each cron run:
@@ -316,6 +331,8 @@ After each cron run:
 - [ ] If 0 new APIs: confirm this is expected (catalog current) — no action needed
 - [ ] If the cron didn't run (gap > 24h): check gateway status, the cron depends on the scheduler ticker
 - [ ] Any new negative claim about a dead API was proven with a known-good tenant first
+- [ ] Any "no public endpoint" negative names the exact host probed, and a later session showing
+      data from that domain triggers a re-probe (wrong-layer negatives recur)
 - [ ] Probes ran as scratch files, not as `python3 -c` or a pipe into an interpreter
 - [ ] Any host cited as evidence had its `<title>` printed — a parked/hijacked domain returns 200
       with better structured data than the live site it replaced
