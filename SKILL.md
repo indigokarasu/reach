@@ -2,7 +2,7 @@
 name: ocas-reach
 license: MIT
 description: 'Live world-data query engine. Use when a request needs a verifiable real-time fact ("what is X now", "latest Y for Z"). Queries external APIs for factual ground truth — no synthesis, no opinion, no research. Routes requests through a registry of 60+ sources covering US government data, scholarly literature, weather and hazards, geocoding, finance and macro indicators, court records, nutrition, news events, property records, land due-diligence, academic papers, satellite imagery, and product manuals (3M+). NOT for web research (use Sift), entity investigations (use Scout), or pattern analysis over historical signals.'
-source: https://github.com/<agent-handle>/reach
+source: https://github.com/indigokarasu/reach
 includes:
 - references/**
 - scripts/**
