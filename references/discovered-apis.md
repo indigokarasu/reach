@@ -33,6 +33,7 @@ _Lookup by what data you need. Cross-references the main source index._
 | Social profiles | `linkedin` (main index) | `reddit` (main index) | |
 | Tech/news social feed | Hacker News API | `reddit` (main index) | Top/New/Best stories, comments, users; Firebase JSON, no auth |
 | Reverse image search | Yandex Images | Google Images | Via browser (Yandex) or residential IP (Google) |
+| Social media (AT Protocol) | Bluesky AT Protocol (XRPC) | — | Public posts, profiles, follow graphs; app password auth; ~3000 req/5min |
 
 ### Geocoding & Places
 | Data | Best Source | Alternatives | Notes |
@@ -82,6 +83,7 @@ _Lookup by what data you need. Cross-references the main source index._
 | Data | Best Source | Alternatives | Notes |
 |------|-------------|--------------|-------|
 | Image generation | Pollinations.ai | — | Used by ocas-imagine |
+| Design trends / shots | Dribbble API | — | OAuth 2.0; 60 req/min free; images, tags, colors, engagement |
 
 ### Museums & Cultural Heritage
 | Data | Best Source | Alternatives | Notes |
@@ -119,6 +121,11 @@ _Lookup by what data you need. Cross-references the main source index._
 |------|-------------|--------------|-------|
 | Bank transactions | Plaid API | — | Used by ocas-styx for financial sync |
 | Account balances | Plaid API | — | Real-time balance checks |
+
+### Travel & Lodging
+| Data | Best Source | Alternatives | Notes |
+|------|-------------|--------------|-------|
+| Hotel inventory (Bonvoy) | Marriott Strider MCP | Expedia (web scrape), 1Stay (MCP), HotelOracle (MCP) | MCP connector; Bonvoy OAuth; award nights + elite upgrades |
 
 ---
 
@@ -1477,3 +1484,94 @@ quirk of one store or one venue. Both verified live with a known-good control in
   — it is **unreached from here**, and the correct next step is a documented path shape
   from Songkick's own docs, not more guessing. Recorded as unreached, not as dead.
 - **Source session**: `reach:api-mine` cron 2026-10-05.
+
+### Social Media & Design (2026-10-26 reach:api-mine)
+
+#### Bluesky AT Protocol (atproto)
+- **Endpoint**: `https://bsky.social/xrpc/` — XRPC (JSON over HTTP). Key endpoints:
+  `app.bsky.feed.getTimeline`, `app.bsky.feed.getAuthorFeed`,
+  `app.bsky.actor.getProfile`, `app.bsky.feed.searchPosts`,
+  `app.bsky.graph.getFollows`, `app.bsky.graph.getFollowers`.
+- **Access**: App password auth (email + app password → session token via
+  `com.atproto.server.createSession`). Free; no rate-limit published but
+  observed ~3000 req/5min. Token refresh via `com.atproto.server.refreshSession`.
+- **Data**: Posts (text, embeds, images, links), profiles (handle, display name,
+  bio, avatar, follower/following counts), follow graphs, timelines, search.
+  All data is public by default (Bluesky is a public social network).
+- **Quality**: Primary source — the AT Protocol is the native API for Bluesky.
+  More structured than scraping bsky.app. Complements HN API (tech news) and
+  Reddit (social feed) as a content/social signal.
+- **Consumer skills**: ocas-haiku (Bluesky presence — posts, follows, timeline
+  scanning), ocas-sift (social research), ocas-vesper (daily briefing).
+- **Verdict**: Should be registered as a Reach source. The ocas-haiku skill
+  currently uses the `bsky` CLI (which wraps this API) and direct XRPC calls.
+  A Reach connector would standardize access and add quota tracking.
+- **Source session**: Multiple cron sessions (ocas-haiku content-post, morning-scan)
+  reference Bluesky API usage via `bsky` CLI and XRPC endpoints.
+
+#### Dribbble (design trends)
+- **Endpoint**: `https://api.dribbble.com/v2/` — REST JSON. Key endpoints:
+  `shots` (list/search), `shots/{id}`, `users/{id}`, `teams/{id}`.
+  Also: `https://dribbble.com/search` (web search, no API key needed).
+- **Access**: OAuth 2.0 (client credentials or authorization code). Free tier:
+  60 requests/minute. Pro tier for higher limits. Some endpoints require
+  `access_token` in query or header.
+- **Data**: Design shots (images, titles, descriptions, tags, colors, views,
+  likes, rebounds), user profiles, teams, buckets (collections). Good for
+  design trend discovery and visual inspiration.
+- **Quality**: Primary source — Dribbble is the design platform. Complements
+  AIGA Eye on Design and vintage computing feeds (68k.news, Mac GUI) as
+  design/UX content sources.
+- **Consumer skills**: ocas-haiku (Design & UX pillar — "Dribbble trending").
+- **Verdict**: Should be registered as a Reach source. Currently consumed via
+  web scraping (`web_search` for "Dribbble trending"). A Reach connector with
+  the Dribbble API would provide structured shot data with colors, tags, and
+  engagement metrics.
+- **Source session**: ocas-haiku cron sessions (content-post, morning-scan)
+  reference Dribbble as a content source for the Design & UX pillar.
+
+### Travel & Lodging (2026-10-26 reach:api-mine)
+
+#### Marriott Strider MCP (`@striderlabs/mcp-marriott`)
+- **Endpoint**: MCP server (`mcp-marriott` command via stdio). Not a REST API —
+  an MCP connector that wraps Marriott's internal Bonvoy API.
+- **Access**: Requires `@striderlabs/mcp-marriott` npm package installed globally
+  and Bonvoy OAuth active (via `marriott.mobile_key` browser flow). Session
+  expires; re-auth needed periodically.
+- **Data**: Hotel search by location/dates/room count (with brand/points filters),
+  Bonvoy points balance and elite tier, suite upgrade requests, digital room key
+  (mobile key). Returns real Bonvoy inventory with award nights and elite upgrades.
+- **Quality**: Primary source — Marriott's own inventory system. Complements
+  Expedia (web scrape), 1Stay (MCP), HotelOracle (MCP), and HotelsByDay (API)
+  as lodging sources in the Voyage skill.
+- **Consumer skills**: ocas-voyage (lodging search — Marriott Strider is one of
+  the parallel lodging sources alongside Expedia, Google Hotels, 1Stay, etc.).
+- **Verdict**: Not a traditional REST API; it's an MCP connector. Already
+  integrated into ocas-voyage via the MCP config. Should be noted in the catalog
+  as an MCP-based lodging source but does not need a Reach connector (MCP tools
+  are already available to the agent).
+- **Source session**: ocas-voyage cron sessions (update) reference Marriott
+  Strider MCP as a lodging source.
+
+### Appointment Booking Platforms (2026-10-26 reach:api-mine)
+
+The following platforms are used by the ocas-spot skill for appointment availability
+checking and booking. They are **booking platforms, not data sources** — they
+provide appointment slots, not factual lookups. Already well-documented in
+`ocas-spot/references/platforms/`. Not candidates for Reach registration.
+
+| Platform | API Type | Auth | Used By |
+|----------|----------|------|---------|
+| Yelp Fusion API | REST | API key (free, 5000 calls/day) | Spot venue discovery |
+| Calendly API | REST | Bearer token | Spot availability checks |
+| Resy API | REST (undocumented) | API key + auth token | Spot availability checks |
+| Acuity Scheduling | REST | API key + user ID | Spot availability checks |
+| SevenRooms | Public widget API (no auth) | None | Spot availability checks |
+| Square Appointments | REST | OAuth 2.0 | Spot availability checks |
+| Tock | Web scrape (no public API) | None | Spot availability checks |
+| OpenTable | Web scrape (no public API) | None | Spot availability checks |
+
+- **Source session**: ocas-spot cron sessions and skill references
+  (`ocas-spot/references/platforms/`) document these extensively.
+- **Verdict**: Not candidates for Reach registration. Booking platforms, not
+  data sources. Already documented in the Spot skill.
